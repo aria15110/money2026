@@ -4,568 +4,1203 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="极速记账">
-    <title>极速资产记账本</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="家庭CFO">
+    <title>家庭CFO - 全景资产管家</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-color: #f2f2f7;
-            --card-bg: rgba(255, 255, 255, 0.85);
+        :root { --bg-color: #f4f4f8; --card-bg: rgba(255, 255, 255, 0.9); }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(224, 231, 255, 0.6) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(252, 231, 243, 0.5) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(209, 250, 229, 0.4) 0%, transparent 50%);
+            background-attachment: fixed; 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: none; 
+            color: #1f2937;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle at 50% 0%, #e0e7ff 0%, #f2f2f7 40%);
-            background-attachment: fixed;
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none;
-        }
-        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
-            border-radius: 24px;
+        
+        .glass-card { 
+            background: var(--card-bg); backdrop-filter: saturate(200%) blur(24px); -webkit-backdrop-filter: saturate(200%) blur(24px); 
+            border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); border-radius: 24px; 
         }
-
-        .account-card {
-            min-width: 140px;
-            scroll-snap-align: start;
-            transition: transform 0.2s;
-        }
+        .account-card { min-width: 145px; scroll-snap-align: start; transition: transform 0.2s; position: relative; cursor: pointer;}
         .account-card:active { transform: scale(0.96); }
-
-        .segmented-control {
-            background: rgba(118, 118, 128, 0.12);
-            border-radius: 9px;
-            padding: 2px;
-            display: flex;
-        }
-        .segmented-btn {
-            flex: 1;
-            text-align: center;
-            padding: 6px 0;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 7px;
-            color: #3c3c43;
-            transition: all 0.2s ease;
-        }
-        .segmented-btn.active {
-            background-color: #fff;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04);
-            color: #000;
-        }
-
-        input, select, textarea {
-            font-size: 16px !important;
-            background: rgba(118, 118, 128, 0.05);
-            -webkit-appearance: none; 
-        }
-        input[type="date"], input[type="month"] {
-            display: block;
-            min-height: 2.5rem;
-        }
         
-        /* 账户渐变色 */
-        .grad-alipay { background: linear-gradient(135deg, #1677FF 0%, #0050B3 100%); }
+        .segmented-control { background: rgba(118, 118, 128, 0.1); border-radius: 12px; padding: 3px; display: flex; }
+        .segmented-btn { flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 700; border-radius: 10px; color: #4b5563; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
+        .segmented-btn.active { background-color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1), 0 2px 2px rgba(0,0,0,0.05); color: #111827; }
+        input, select, textarea { font-size: 16px !important; background: rgba(118, 118, 128, 0.05); -webkit-appearance: none; }
+        input[type="date"], input[type="month"] { display: block; min-height: 2.75rem; }
+        
+        /* 极致渐变色卡 */
+        .grad-alipay { background: linear-gradient(135deg, #0088FF 0%, #0050B3 100%); }
         .grad-wechat { background: linear-gradient(135deg, #07C160 0%, #05964A 100%); }
-        .grad-boc { background: linear-gradient(135deg, #B22222 0%, #8B0000 100%); } 
-        .grad-icbc { background: linear-gradient(135deg, #C8161D 0%, #9A0D12 100%); } 
-        .grad-abc { background: linear-gradient(135deg, #009688 0%, #00695C 100%); } 
-        .grad-spdb { background: linear-gradient(135deg, #1A237E 0%, #0D47A1 100%); } 
-        .grad-partner { background: linear-gradient(135deg, #FF6B6B 0%, #D81B60 100%); } 
-        .grad-stock { background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%); } 
-        .grad-fund { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); } 
+        .grad-boc { background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%); } 
+        .grad-icbc { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); } 
+        .grad-abc { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); } 
+        .grad-spdb { background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%); } 
+        .grad-stock { background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%); } 
+        .grad-fund { background: linear-gradient(135deg, #10b981 0%, #047857 100%); } 
+        .grad-credit { background: linear-gradient(135deg, #374151 0%, #111827 100%); } 
+        .grad-social { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); } 
+        .grad-insurance { background: linear-gradient(135deg, #8b5cf6 0%, #5b21b6 100%); } 
+        .grad-partner-active { background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%); } 
+        .grad-partner-saving { background: linear-gradient(135deg, #f472b6 0%, #be185d 100%); } 
 
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background-color: transparent;
-            position: relative;
-        }
-
-        /* 模态框样式 */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            -webkit-overflow-scrolling: touch;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 400px;
-            padding: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .setting-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid #f3f4f6;
-        }
-        .setting-row:last-child { border-bottom: none; }
-
-        /* 撤回提示 Toast 动画 */
-        #undo-toast {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .toast-hidden {
-            transform: translate(-50%, 150%);
-            opacity: 0;
-            pointer-events: none;
-        }
-        .toast-visible {
-            transform: translate(-50%, 0);
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .app-container { max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background-color: transparent; position: relative;}
         
-        .truncate-text {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 160px;
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;}
+        .modal-content { background: white; border-radius: 28px; width: 100%; max-width: 420px; padding: 24px; box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3); max-height: 85vh; overflow-y: auto; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
+        .setting-row:last-child { border-bottom: none; }
+        
+        #global-toast, #undo-toast { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10000; pointer-events: none;}
+        .global-toast-hidden { transform: translate(-50%, -150%); opacity: 0; }
+        .global-toast-visible { transform: translate(-50%, 0); opacity: 1; }
+        .toast-hidden { transform: translate(-50%, 150%); opacity: 0; pointer-events: none; }
+        .toast-visible { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+
+        .acc-badge { position: absolute; top: 10px; right: 10px; font-size: 9px; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.25); font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.1); backdrop-filter: blur(4px);}
+
+        .tag-pill {
+            padding: 5px 12px; border-radius: 14px; font-size: 11px; font-weight: 800; cursor: pointer;
+            border: 1px solid #e5e7eb; color: #6b7280; transition: all 0.2s; background: white; white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
+        .tag-pill.active { background: #eff6ff; border-color: #3b82f6; color: #2563eb; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2); }
+        .tx-tag { font-size: 9px; padding: 2px 5px; border-radius: 6px; font-weight: 800; background: #f3f4f6; color: #6b7280; margin-left: 4px;}
+        .tx-tag.alert { background: #fef2f2; color: #ef4444; }
+        .tx-tag.info { background: #eff6ff; color: #3b82f6; }
+        .tx-tag.auto { background: #fdf4ff; color: #7e22ce; border: 1px solid #e9d5ff;}
+
+        @keyframes smartHighlight { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        .smart-animate { animation: smartHighlight 1s ease-out; border-color: #3b82f6 !important; }
+        .truncate-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+
+        /* 目标储蓄卡片特效 */
+        .fund-progress-container { width: 100%; background: rgba(0,0,0,0.05); border-radius: 999px; height: 10px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);}
+        .fund-progress-bar { height: 10px; border-radius: 999px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(90deg, #10b981, #34d399); position: relative;}
+        .fund-progress-bar::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%); animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        
+        .clickable-icon { padding: 8px; margin: -8px; border-radius: 50%; transition: background-color 0.2s; }
+        .clickable-icon:active { background-color: rgba(0,0,0,0.05); }
     </style>
 </head>
-<body class="pb-safe"> <!-- 适配 iPhone 底部小黑条 -->
+<body class="pb-safe">
+
+<div id="global-toast" class="fixed top-14 left-1/2 z-[200] bg-white/95 backdrop-blur-xl shadow-xl border border-gray-100/50 px-5 py-3.5 rounded-full flex items-center gap-3 global-toast-hidden">
+    <i id="global-toast-icon" class="fa-solid fa-circle-check text-green-500 text-xl"></i>
+    <span id="global-toast-text" class="text-[15px] font-extrabold text-gray-800 whitespace-nowrap tracking-wide">提示信息</span>
+</div>
 
 <div class="app-container">
     
-    <header class="pt-12 pb-4 px-6 z-10 flex-shrink-0">
-        <!-- 顶部功能栏 -->
-        <div class="absolute top-4 left-6 flex gap-2">
-            <button onclick="openTransferModal()" class="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-1.5 rounded-full border border-blue-100 flex items-center gap-1.5 active:scale-95 transition-transform">
-                <i class="fa-solid fa-cloud-arrow-down"></i> 备份与恢复
+    <!-- ================= 1. 全景资产表头 ================= -->
+    <header class="pt-12 pb-2 px-4 z-10 flex-shrink-0">
+        <div class="absolute top-4 left-4 flex gap-2">
+            <button onclick="openTransferModal()" class="text-xs font-black text-blue-600 bg-white/80 backdrop-blur-md px-3.5 py-2 rounded-full border border-white shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform">
+                <i class="fa-solid fa-cloud"></i> 数据舱
             </button>
         </div>
         
-        <div class="absolute top-4 right-6 flex gap-2">
-            <button onclick="openSettingsModal()" class="w-8 h-8 bg-white/50 backdrop-blur-md rounded-full border border-white flex items-center justify-center text-gray-600 active:scale-95 transition-transform shadow-sm">
-                <i class="fa-solid fa-gear"></i>
+        <div class="absolute top-4 right-4 flex gap-2">
+            <button onclick="openSettingsModal()" class="w-9 h-9 bg-white/80 backdrop-blur-md rounded-full border border-white flex items-center justify-center text-gray-800 active:scale-95 transition-transform shadow-sm">
+                <i class="fa-solid fa-sliders text-sm"></i>
             </button>
         </div>
 
-        <!-- 总资产展示区 -->
-        <div class="flex justify-between items-start mb-6 mt-6">
-            <div class="flex flex-col gap-2">
+        <div class="bg-gray-900 rounded-[28px] p-6 text-white shadow-2xl relative overflow-hidden mt-8 mb-4 border border-gray-700/50">
+            <div class="absolute -right-4 -bottom-6 opacity-10 text-9xl"><i class="fa-solid fa-vault"></i></div>
+            <div class="flex items-center justify-between mb-1 relative z-10">
+                <p class="text-[13px] text-gray-300 font-bold flex items-center gap-2 tracking-wider">
+                    <i class="fa-solid fa-user text-blue-400"></i> 我的个人总净资产
+                    <i id="eye-icon" class="fa-solid fa-eye text-gray-400 clickable-icon" onclick="togglePrivacy()"></i>
+                </p>
+            </div>
+            <h1 id="total-balance" class="text-[42px] leading-tight font-black tracking-tighter mb-4 data-money relative z-10">¥0.00</h1>
+            
+            <div class="flex items-center gap-6 pt-4 border-t border-gray-700/80 relative z-10">
                 <div>
-                    <p class="text-gray-500 text-sm font-medium mb-1">我的个人总净资产</p>
-                    <h1 id="total-balance" class="text-4xl font-extrabold tracking-tight text-gray-900">¥0.00</h1>
+                    <p class="text-[11px] text-gray-400 mb-0.5 font-bold uppercase">我的总资产</p>
+                    <p id="total-asset" class="text-[15px] font-black text-emerald-400 data-money">¥0.00</p>
                 </div>
-                <div class="inline-flex items-center gap-2 bg-pink-50/80 px-3 py-1.5 rounded-lg border border-pink-100/50 w-fit mt-1">
-                    <i class="fa-solid fa-heart text-pink-400 text-xs"></i>
-                    <span class="text-gray-500 text-xs font-medium">对象/家庭资金：</span>
-                    <span id="partner-balance" class="text-pink-600 font-bold text-sm">¥0.00</span>
+                <div class="w-px h-8 bg-gray-700/80"></div>
+                <div>
+                    <p class="text-[11px] text-gray-400 mb-0.5 font-bold uppercase">我的总负债</p>
+                    <p id="total-liability" class="text-[15px] font-black text-red-400 data-money">¥0.00</p>
                 </div>
             </div>
         </div>
 
-        <!-- 银行卡横向滑动区 -->
-        <div class="flex overflow-x-auto hide-scrollbar gap-4 pb-4 snap-x snap-mandatory" id="account-container">
-            <!-- 卡片由 JS 注入 -->
+        <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-[20px] p-4 border border-pink-100 shadow-sm mb-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500"><i class="fa-solid fa-house-chimney-user text-lg"></i></div>
+                <div>
+                    <p class="text-[11px] font-extrabold text-pink-600/80 mb-0.5">对象/家庭资金池</p>
+                    <p id="partner-balance" class="text-[19px] font-black text-pink-600 data-money leading-none tracking-tight">¥0.00</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] bg-white/80 text-pink-500 px-2 py-1 rounded-md font-bold shadow-sm">完全隔离</span>
+            </div>
         </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto px-4 pb-8 flex flex-col gap-5 hide-scrollbar">
+    <main class="flex-1 px-4 pb-16 flex flex-col gap-6 hide-scrollbar">
         
-        <!-- 快速记账卡片 -->
-        <div class="glass-card p-5 shadow-sm border border-gray-100/50">
-            <h3 class="font-bold text-lg mb-4 text-gray-800 flex items-center gap-2">
-                <i class="fa-solid fa-pen-nib text-blue-500"></i> 快速记账
+        <div>
+            <div class="flex justify-between items-center mb-3 px-2">
+                <h3 class="font-extrabold text-[15px] text-gray-900 tracking-wide">各大账户余额分布</h3>
+            </div>
+            <div class="flex overflow-x-auto hide-scrollbar gap-3.5 pb-4 snap-x snap-mandatory px-1" id="account-container"></div>
+        </div>
+
+        <div id="ai-alerts-container" class="space-y-3"></div>
+
+        <div class="glass-card p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-white">
+            <h3 class="font-black text-xl mb-5 text-gray-900 flex items-center gap-2 tracking-tight">
+                <i class="fa-solid fa-bolt text-blue-500"></i> AI 记账台
             </h3>
-            <form id="form" class="space-y-4">
-                <div class="segmented-control mb-4">
+            <form id="form" class="space-y-5">
+                <div class="segmented-control mb-2">
                     <button type="button" class="segmented-btn active" data-type="expense">支出</button>
                     <button type="button" class="segmented-btn" data-type="income">收入</button>
-                    <button type="button" class="segmented-btn" data-type="refund">退款/转移</button>
+                    <button type="button" class="segmented-btn" data-type="transfer">流转还款</button>
+                    <button type="button" class="segmented-btn" data-type="pnl">投资盈亏</button>
                 </div>
 
-                <div class="flex gap-3">
-                    <div class="w-[45%]">
-                        <label class="block text-xs font-medium text-gray-500 mb-1 ml-1">日期</label>
-                        <input type="date" id="tx-date" class="w-full rounded-xl h-12 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 bg-gray-50/80 border border-gray-200/50" required>
+                <div class="flex gap-4">
+                    <div class="w-[40%]">
+                        <label class="block text-[11px] font-black text-gray-400 mb-1.5 ml-1 uppercase">Date</label>
+                        <input type="date" id="tx-date" class="w-full rounded-xl h-14 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-800 bg-gray-50 border border-gray-200/80 text-[15px]" required>
                     </div>
-                    <div class="w-[55%]">
-                        <label class="block text-xs font-medium text-gray-500 mb-1 ml-1">金额</label>
-                        <input type="number" id="amount" class="w-full rounded-xl h-12 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-lg bg-gray-50/80 border border-gray-200/50" placeholder="0.00" step="0.01" inputmode="decimal" required>
+                    <div class="w-[60%]">
+                        <label class="block text-[11px] font-black text-gray-400 mb-1.5 ml-1 uppercase">Amount (¥)</label>
+                        <input type="number" id="amount" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 font-black text-2xl text-gray-900 bg-gray-50 border border-gray-200/80" placeholder="0.00" step="0.01" inputmode="decimal" required>
                     </div>
                 </div>
 
-                <div class="flex gap-3">
-                    <div class="w-1/2">
-                        <label class="block text-xs font-medium text-gray-500 mb-1 ml-1">账户</label>
-                        <select id="account-select" class="w-full rounded-xl h-12 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 bg-gray-50/80 border border-gray-200/50"></select>
+                <div>
+                    <div class="flex justify-between items-end mb-1.5">
+                        <label class="block text-[11px] font-black text-gray-500 ml-1">备注明细 <span class="text-blue-500 ml-1 text-[10px] bg-blue-50 px-1.5 py-0.5 rounded">✨NLP自动分类</span></label>
                     </div>
-                    <div class="w-1/2">
-                        <label class="block text-xs font-medium text-gray-500 mb-1 ml-1">分类</label>
-                        <!-- 这里的选项会根据支出/收入动态变化 -->
-                        <select id="category" class="w-full rounded-xl h-12 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 bg-gray-50/80 border border-gray-200/50">
-                            <!-- JS 动态注入 -->
-                        </select>
+                    <input type="text" id="text" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-800 bg-gray-50 border border-gray-200/80 text-[15px]" placeholder="输入'瑞幸'、'还花呗'试试..." required>
+                </div>
+
+                <div class="flex gap-2.5 overflow-x-auto hide-scrollbar pb-1 pt-1" id="tags-container">
+                    <span class="tag-pill" data-tag="固定支出">📌 固定支出</span>
+                    <span class="tag-pill" data-tag="冲动消费">⚠️ 冲动消费</span>
+                    <span class="tag-pill" data-tag="可报销">🏢 可报销</span>
+                    <span class="tag-pill" data-tag="可优化">✂️ 可优化</span>
+                    <span class="tag-pill" data-tag="投资复盘">📈 投资复盘</span>
+                </div>
+
+                <div class="flex gap-4 pt-1">
+                    <div id="from-account-wrapper" class="w-1/2 hidden">
+                        <label class="block text-[11px] font-black text-gray-500 mb-1.5 ml-1">转出账户</label>
+                        <select id="from-account-select" class="w-full rounded-xl h-14 px-3 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200/80 text-[15px]"></select>
+                    </div>
+                    <div id="account-wrapper" class="w-1/2">
+                        <label id="account-label" class="block text-[11px] font-black text-gray-500 mb-1.5 ml-1">消费账户</label>
+                        <select id="account-select" class="w-full rounded-xl h-14 px-3 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200/80 text-[15px] transition-all"></select>
+                    </div>
+                    <div id="category-wrapper" class="w-1/2">
+                        <label class="block text-[11px] font-black text-gray-500 mb-1.5 ml-1">资金分类</label>
+                        <select id="category" class="w-full rounded-xl h-14 px-2 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200/80 text-[14px] transition-all"></select>
                     </div>
                 </div>
                 
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1 ml-1">备注说明</label>
-                    <input type="text" id="text" class="w-full rounded-xl h-12 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 bg-gray-50/80 border border-gray-200/50" placeholder="例如：打车、发工资..." required>
+                <div id="aa-wrapper" class="flex items-center gap-2 px-3 py-2 mt-1 bg-indigo-50/50 rounded-xl w-full border border-indigo-100/80 transition-all">
+                    <input type="checkbox" id="is-shared" class="w-4 h-4 text-indigo-600 rounded border-indigo-300 focus:ring-indigo-500">
+                    <label for="is-shared" class="text-[13px] font-bold text-indigo-700 select-none flex items-center gap-1.5 w-full"><i class="fa-solid fa-people-arrows"></i> 设为家庭公共开支 <span class="text-[10px] text-indigo-400 font-medium ml-auto">(月末算AA)</span></label>
                 </div>
 
-                <button type="submit" class="w-full h-12 bg-gray-900 active:bg-gray-800 text-white font-semibold rounded-xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 mt-2">
-                    <i class="fa-solid fa-check"></i> 保存这笔账单
+                <button type="submit" class="w-full h-14 bg-gray-900 active:bg-black text-white font-black text-[16px] rounded-xl shadow-xl shadow-gray-900/20 transition-transform active:scale-95 flex items-center justify-center gap-2 mt-4 tracking-wide">
+                    <i class="fa-solid fa-check"></i> 记录账单
                 </button>
             </form>
         </div>
 
-        <!-- 月份切换与数据区 -->
-        <div class="glass-card p-5 mt-2">
+        <div>
+            <div class="flex justify-between items-center mb-3 px-2 mt-2">
+                <h3 class="font-black text-[15px] text-gray-900">近期明细 <span class="font-bold text-gray-400 text-xs">(Top 30)</span></h3>
+            </div>
+            <div class="glass-card p-5">
+                <ul id="recent-list" class="space-y-0 divide-y divide-gray-100/80"></ul>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 border-t-4 border-emerald-500 mt-2 shadow-lg">
+            <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
+                <div>
+                    <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight">
+                        <i class="fa-solid fa-bullseye text-emerald-500"></i> 愿景目标储蓄
+                    </h3>
+                    <p class="text-[11px] text-gray-500 font-bold mt-1.5">信封理财法：给每一分“死钱”赋予使命</p>
+                </div>
+                <button onclick="openFundModal()" class="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center font-bold active:scale-95 transition-transform"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="funds-container" class="space-y-4"></div>
+        </div>
+
+        <div class="glass-card p-6 mt-2">
             <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-4">
-                <h3 class="font-bold text-gray-800">月度数据看板</h3>
-                <input type="month" id="month-filter" class="rounded-lg px-2 py-1 text-sm bg-gray-100 border-none focus:ring-2 focus:ring-blue-500 text-blue-600 font-bold w-32 outline-none">
+                <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight">
+                    <i class="fa-solid fa-file-invoice-dollar text-blue-500"></i> 月度现金流表
+                </h3>
+                <input type="month" id="month-filter" class="rounded-xl px-3 py-1.5 text-sm bg-gray-100 border-none focus:ring-2 focus:ring-blue-500 font-black text-blue-600 outline-none">
             </div>
 
-            <!-- 预算进度条 -->
+            <div class="bg-white rounded-[24px] p-5 border border-blue-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-6 relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-32 h-32 bg-blue-50/50 rounded-bl-[80px] -z-10"></div>
+                
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[13px] text-gray-500 font-bold">本月总流入 (收入)</span>
+                    <span class="text-[17px] font-black text-green-600 data-money" id="month-income">+¥0.00</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[13px] text-gray-500 font-bold">本月流水总支出</span>
+                    <span class="text-[17px] font-black text-gray-900 data-money" id="month-expense">-¥0.00</span>
+                </div>
+                
+                <div class="pl-4 border-l-[3px] border-gray-200/60 ml-2 mb-5 mt-3 space-y-2.5">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-700">👤 个人专属开销</span>
+                            <span class="text-xs font-black text-gray-700 data-money" id="month-personal-expense">-¥0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1.5">
+                            <span class="text-[10px] text-gray-400 font-bold">├─ 日常生存开销 <span id="month-routine-pct" class="text-gray-400 ml-1 font-mono font-black">0%</span></span>
+                            <span class="text-[10px] font-bold text-gray-500 data-money" id="month-routine-expense">¥0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-[10px] text-gray-400 font-bold">└─ 大额/非日常 <span id="month-nonroutine-pct" class="text-gray-400 ml-1 font-mono font-black">0%</span></span>
+                            <span class="text-[10px] font-bold text-gray-500 data-money" id="month-nonroutine-expense">¥0.00</span>
+                        </div>
+                    </div>
+                    <div class="pt-2.5 border-t border-gray-50">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-indigo-700">👨‍👩‍👧‍👦 家庭公共开支 (我垫付)</span>
+                            <span class="text-xs font-black text-indigo-700 data-money" id="month-family-expense">-¥0.00</span>
+                        </div>
+                        <p class="text-[10px] font-bold text-indigo-400 mt-1" id="month-family-receivable">对方应补偿我 (50%): ¥0.00</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-end pt-4 border-t-2 border-gray-100">
+                    <div>
+                        <span class="text-[15px] font-black text-blue-700 block">真实净结余</span>
+                        <span class="text-[10px] font-medium text-gray-400">(收入 - 个人 - 家庭一半)</span>
+                    </div>
+                    <span class="text-[28px] leading-none font-black text-blue-700 data-money tracking-tighter" id="month-true-net">¥0.00</span>
+                </div>
+            </div>
+
             <div class="mb-6">
-                <div class="flex justify-between text-xs mb-1.5 font-medium">
-                    <span class="text-gray-500">本月预算消耗</span>
-                    <span id="budget-text" class="text-gray-700 font-mono">¥0.00 / 未设置</span>
+                <div class="flex justify-between text-xs mb-2 font-bold">
+                    <span class="text-gray-500">消费预算管控 (总流出)</span>
+                    <span id="budget-text" class="text-gray-800 font-mono font-bold">¥0.00 / 未设</span>
                 </div>
-                <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200">
-                    <div id="budget-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden border border-gray-200/50">
+                    <div id="budget-bar" class="bg-blue-500 h-3 rounded-full transition-all duration-700 relative overflow-hidden" style="width: 0%"><div class="absolute inset-0 bg-white/20" style="animation: shimmer 2s infinite;"></div></div>
                 </div>
-                <p id="budget-warning" class="text-[10px] text-red-500 mt-1 hidden"><i class="fa-solid fa-triangle-exclamation"></i> 警告：本月支出已超预算！</p>
             </div>
 
-            <div class="h-48 relative flex items-center justify-center w-full mb-4">
-                <canvas id="expenseChart"></canvas>
-            </div>
-
-            <h3 class="font-bold text-sm mb-3 text-gray-600 mt-6 border-t pt-4">该月流水记录</h3>
+            <div class="h-52 relative flex items-center justify-center w-full mb-5"><canvas id="expenseChart"></canvas></div>
+            
+            <h3 class="font-black text-[15px] mb-3 text-gray-900 mt-8 border-t border-gray-100 pt-5">当月完整明细</h3>
             <ul id="list" class="space-y-0 divide-y divide-gray-100/50"></ul>
         </div>
 
-        <!-- 原生分享导出按钮 -->
-        <div class="glass-card p-5">
-            <h3 class="font-bold text-lg mb-4 text-gray-800 flex justify-between items-center">
-                <span>导出表格 (CSV)</span>
-                <i class="fa-solid fa-share-nodes text-blue-500"></i>
-            </h3>
-            <div class="flex gap-3">
-                <button onclick="exportReport('month')" class="flex-1 bg-white border border-gray-200 py-3 rounded-xl shadow-sm text-sm font-medium text-gray-700 active:bg-gray-50 flex flex-col items-center gap-1 transition-colors">
-                    <i class="fa-regular fa-calendar-days text-blue-500 text-lg"></i>本月
-                </button>
-                <button onclick="exportReport('year')" class="flex-1 bg-white border border-gray-200 py-3 rounded-xl shadow-sm text-sm font-medium text-gray-700 active:bg-gray-50 flex flex-col items-center gap-1 transition-colors">
-                    <i class="fa-regular fa-calendar text-indigo-500 text-lg"></i>年度
-                </button>
-                <button onclick="exportReport('all')" class="flex-1 bg-white border border-gray-200 py-3 rounded-xl shadow-sm text-sm font-medium text-gray-700 active:bg-gray-50 flex flex-col items-center gap-1 transition-colors">
-                    <i class="fa-solid fa-database text-green-500 text-lg"></i>全部
-                </button>
+        <div class="glass-card p-6 mt-2 border-t-4 border-orange-500">
+            <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
+                <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight"><i class="fa-solid fa-chart-pie text-orange-500"></i> 华尔街策略机</h3>
+                <span class="text-[10px] font-bold bg-orange-50 text-orange-600 px-2.5 py-1.5 rounded-lg border border-orange-100">行为金融学</span>
             </div>
-            <p class="text-[10px] text-gray-400 mt-3 text-center">生成表格后，可直接通过微信发送或隔空投送</p>
+            <div class="grid grid-cols-2 gap-4 mb-5">
+                <div class="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+                    <p class="text-[11px] font-bold text-gray-500 mb-1.5">近30天胜率</p>
+                    <p class="text-2xl font-black text-gray-900" id="strategy-winrate">-</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+                    <p class="text-[11px] font-bold text-gray-500 mb-1.5">近30天盈亏</p>
+                    <p class="text-xl font-black text-gray-900 data-money" id="strategy-pnl">¥0.00</p>
+                </div>
+            </div>
+            <div id="strategy-advice-box" class="bg-orange-50/50 rounded-2xl p-5 border border-orange-100 text-[14px] text-gray-800 space-y-2.5 leading-relaxed font-bold"></div>
         </div>
-        <p class="text-center text-xs text-gray-400 pb-12">本地极速版 · 数据绝对安全隐秘</p>
+
+        <div class="glass-card p-6 mt-2 border-t-4 border-indigo-500">
+            <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
+                <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight"><i class="fa-solid fa-robot text-indigo-500"></i> 家庭资产雷达</h3>
+                <span class="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2.5 py-1.5 rounded-lg border border-indigo-100">标普4321</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-50/70 rounded-[20px] p-4 border border-blue-100 relative overflow-hidden">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-6xl"><i class="fa-solid fa-wallet"></i></div>
+                    <p class="text-[11px] text-blue-700 font-black mb-2">日常开销 (活期)</p>
+                    <div class="flex items-end justify-between"><span class="text-2xl font-black text-gray-900" id="quad-daily-ratio">0%</span><span class="text-[10px] font-bold text-blue-400">基准 10%</span></div>
+                </div>
+                <div class="bg-emerald-50/70 rounded-[20px] p-4 border border-emerald-100 relative overflow-hidden">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-6xl"><i class="fa-solid fa-building-columns"></i></div>
+                    <p class="text-[11px] text-emerald-700 font-black mb-2">保本升值 (稳健)</p>
+                    <div class="flex items-end justify-between"><span class="text-2xl font-black text-gray-900" id="quad-safe-ratio">0%</span><span class="text-[10px] font-bold text-emerald-500">基准 40%</span></div>
+                </div>
+                <div class="bg-orange-50/70 rounded-[20px] p-4 border border-orange-100 relative overflow-hidden">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-6xl"><i class="fa-solid fa-chart-line"></i></div>
+                    <p class="text-[11px] text-orange-700 font-black mb-2">生钱资产 (投资)</p>
+                    <div class="flex items-end justify-between"><span class="text-2xl font-black text-gray-900" id="quad-invest-ratio">0%</span><span class="text-[10px] font-bold text-orange-400">基准 30%</span></div>
+                </div>
+                <div class="bg-purple-50/70 rounded-[20px] p-4 border border-purple-100 relative overflow-hidden">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-6xl"><i class="fa-solid fa-shield-heart"></i></div>
+                    <p class="text-[11px] text-purple-700 font-black mb-2">杠杆防线 (保险)</p>
+                    <div class="flex items-end justify-between"><span class="text-2xl font-black text-gray-900" id="quad-insurance-ratio">0%</span><span class="text-[10px] font-bold text-purple-400">基准 20%</span></div>
+                </div>
+            </div>
+            <div id="ai-advisor-box" class="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-[14px] text-gray-800 space-y-3 leading-relaxed font-bold"></div>
+        </div>
+
+        <div class="glass-card p-6 mt-2 mb-4">
+            <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
+                <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight"><i class="fa-solid fa-stethoscope text-blue-500"></i> 年度财报体检</h3>
+                <select id="year-filter" class="rounded-xl px-3 py-1.5 text-sm bg-gray-100 border-none focus:ring-2 focus:ring-blue-500 font-black text-blue-600 outline-none"></select>
+            </div>
+            
+            <div class="bg-white rounded-[24px] p-5 border border-emerald-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-6 relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-50/50 rounded-bl-[80px] -z-10"></div>
+                <div class="flex justify-between items-center mb-3"><span class="text-[13px] text-gray-500 font-bold">年度总收入</span><span class="text-[17px] font-black text-green-600 data-money" id="year-income">+¥0.00</span></div>
+                <div class="flex justify-between items-center mb-2"><span class="text-[13px] text-gray-500 font-bold">年度总支出</span><span class="text-[17px] font-black text-gray-900 data-money" id="year-expense">-¥0.00</span></div>
+                <div class="pl-4 border-l-[3px] border-gray-200/60 ml-2 mb-5 mt-3 space-y-2.5">
+                    <div class="flex justify-between items-center"><span class="text-xs font-bold text-gray-700">├─ 纯日常开销 <span id="year-routine-pct" class="text-gray-400 ml-1 font-mono font-black">0%</span></span><span class="text-xs font-black text-gray-600 data-money" id="year-routine-expense">-¥0.00</span></div>
+                    <div class="flex justify-between items-center"><span class="text-xs font-bold text-gray-700">└─ 大额/非日常 <span id="year-nonroutine-pct" class="text-gray-400 ml-1 font-mono font-black">0%</span></span><span class="text-xs font-black text-gray-600 data-money" id="year-nonroutine-expense">-¥0.00</span></div>
+                </div>
+                <div class="flex justify-between items-end pt-4 border-t-2 border-gray-100"><span class="text-[15px] font-black text-emerald-700">全年度净结余</span><span class="text-[26px] leading-none font-black text-emerald-700 data-money tracking-tighter" id="year-net">¥0.00</span></div>
+            </div>
+
+            <div class="bg-gray-50 rounded-[24px] p-6 border border-gray-200/80 relative overflow-hidden">
+                <div class="flex justify-between items-end mb-4 relative z-10">
+                    <div><span class="text-[15px] font-black text-gray-900 block mb-1">年度恩格尔系数</span><span class="text-[11px] font-bold text-gray-500">(饮食 ÷ 纯日常支出)</span></div>
+                    <span class="text-[32px] leading-none font-black text-blue-600 tracking-tighter" id="engel-number">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-5 relative z-10"><div id="engel-bar" class="bg-gradient-to-r from-blue-400 to-indigo-500 h-3 rounded-full transition-all duration-1000 shadow-sm" style="width: 0%"></div></div>
+                <div id="financial-advice" class="pt-5 border-t border-gray-200 text-[14px] relative z-10 space-y-3 font-bold text-gray-800"></div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 mb-10">
+            <h3 class="font-black text-lg mb-5 text-gray-900 flex justify-between items-center"><span>导出财务报表 (CSV)</span><i class="fa-solid fa-share-from-square text-gray-400"></i></h3>
+            <div class="flex gap-3">
+                <button onclick="exportReport('month')" class="flex-1 bg-white border border-gray-200 py-3.5 rounded-2xl shadow-sm text-xs font-black text-gray-800 active:scale-95 transition-transform flex flex-col items-center gap-2"><i class="fa-regular fa-calendar-days text-blue-500 text-xl"></i>导出本月</button>
+                <button onclick="exportReport('year')" class="flex-1 bg-white border border-gray-200 py-3.5 rounded-2xl shadow-sm text-xs font-black text-gray-800 active:scale-95 transition-transform flex flex-col items-center gap-2"><i class="fa-regular fa-calendar text-indigo-500 text-xl"></i>导出年度</button>
+                <button onclick="exportReport('all')" class="flex-1 bg-white border border-gray-200 py-3.5 rounded-2xl shadow-sm text-xs font-black text-gray-800 active:scale-95 transition-transform flex flex-col items-center gap-2"><i class="fa-solid fa-database text-emerald-500 text-xl"></i>全部数据</button>
+            </div>
+        </div>
+        
     </main>
 </div>
 
-<!-- 撤回提示 Toast -->
-<div id="undo-toast" class="fixed bottom-10 left-1/2 bg-gray-900 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-4 z-50 toast-hidden border border-gray-700">
-    <div class="flex items-center gap-2">
-        <i class="fa-solid fa-circle-check text-green-400"></i>
-        <span id="undo-text" class="text-sm font-medium whitespace-nowrap truncate-text">已记一笔</span>
-    </div>
-    <div class="w-px h-4 bg-gray-600"></div>
-    <button onclick="undoLastTransaction()" class="text-blue-400 font-bold text-sm hover:text-blue-300 active:scale-95 transition-transform whitespace-nowrap">
-        <i class="fa-solid fa-rotate-left mr-1"></i>撤回
-    </button>
+<div id="undo-toast" class="fixed bottom-10 left-1/2 bg-gray-900/95 backdrop-blur text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-4 z-50 toast-hidden border border-gray-700">
+    <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i><span id="undo-text" class="text-[15px] font-bold whitespace-nowrap truncate-text tracking-wide">已记一笔</span></div>
+    <div class="w-px h-5 bg-gray-600"></div>
+    <button onclick="undoLastTransaction()" class="text-blue-400 font-black text-[15px] hover:text-blue-300 active:scale-95 transition-transform whitespace-nowrap"><i class="fa-solid fa-rotate-left mr-1"></i>撤回</button>
 </div>
 
-<!-- 设置模态框 -->
-<div id="settings-modal" class="modal-overlay">
+<div id="fund-modal" class="modal-overlay">
     <div class="modal-content">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="font-bold text-xl text-gray-800 flex items-center gap-2">
-                <i class="fa-solid fa-gear text-blue-500"></i> 系统设置
-            </h3>
-            <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600 p-1 bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-bullseye text-emerald-500"></i> 管理目标储蓄</h3>
+            <button onclick="closeFundModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
         </div>
-
-        <div class="mb-6">
-            <label class="block text-sm font-bold text-gray-700 mb-2">💰 每月支出预算上限</label>
-            <div class="relative w-full">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">¥</span>
-                <input type="number" id="monthly-budget-input" placeholder="例如: 5000" step="100" class="w-full pl-7 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 font-bold bg-gray-50">
+        <input type="hidden" id="fund-id">
+        <div class="space-y-5">
+            <div class="flex gap-3">
+                <div class="w-1/3"><label class="block text-[11px] font-bold text-gray-500 mb-1.5 ml-1">图标</label><input type="text" id="fund-icon" class="w-full rounded-xl h-14 px-3 text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xl bg-gray-50 border border-gray-200" placeholder="✈️"></div>
+                <div class="w-2/3"><label class="block text-[11px] font-bold text-gray-500 mb-1.5 ml-1">基金名称</label><input type="text" id="fund-name" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-gray-900 bg-gray-50 border border-gray-200" placeholder="如: 旅游基金"></div>
             </div>
-            <p class="text-[10px] text-gray-400 mt-1">留空则不显示预算进度</p>
+            <div><label class="block text-[11px] font-bold text-gray-500 mb-1.5 ml-1">目标金额 (¥)</label><input type="number" id="fund-target" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-black text-xl text-gray-900 bg-gray-50 border border-gray-200" placeholder="10000" step="100"></div>
+            <div><label class="block text-[11px] font-bold text-emerald-600 mb-1.5 ml-1">已攒金额 (¥) <span class="text-gray-400 font-normal ml-1">手动调拨</span></label><input type="number" id="fund-current" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-black text-xl text-emerald-700 bg-emerald-50 border border-emerald-200" placeholder="0" step="0.01"></div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="deleteFund()" id="fund-delete-btn" class="w-1/3 h-14 bg-red-50 text-red-600 font-bold rounded-xl active:scale-95 hidden">删除</button>
+                <button onclick="saveFund()" id="fund-save-btn" class="w-full h-14 bg-emerald-500 active:bg-emerald-600 text-white font-black text-lg rounded-xl shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform">保存进度</button>
+            </div>
         </div>
-        
-        <h4 class="text-sm font-bold text-gray-700 mb-2 mt-4 border-t pt-4">🏦 设置各账户真实余额</h4>
-        <div id="initial-balances-container" class="space-y-1 mb-6 max-h-[30vh] overflow-y-auto pr-2"></div>
-
-        <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-bold active:bg-blue-700 transition-colors shadow-md mb-4">
-            保存全部设置
-        </button>
-        <button onclick="clearAllData()" class="w-full bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl text-sm font-bold active:bg-red-100 transition-colors">
-            <i class="fa-solid fa-trash mr-1"></i> 危险区：清空所有数据
-        </button>
     </div>
 </div>
 
-<!-- 备份恢复模态框 -->
+<div id="edit-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-extrabold text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-blue-500"></i> 修改账单记录</h3>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div class="flex gap-3">
+                <div class="w-[45%]"><label class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">日期</label><input type="date" id="edit-date" class="w-full rounded-xl h-14 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-800 bg-gray-50 border border-gray-200"></div>
+                <div class="w-[55%]"><label class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">金额</label><input type="number" id="edit-amount" step="0.01" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 font-black text-xl text-gray-900 bg-gray-50 border border-gray-200"></div>
+            </div>
+            <div id="edit-normal-fields" class="flex gap-3">
+                <div id="edit-from-account-wrapper" class="w-1/2 hidden"><label class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">转出账户</label><select id="edit-from-account" class="w-full rounded-xl h-14 px-3 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200"></select></div>
+                <div id="edit-account-wrapper" class="w-1/2"><label id="edit-account-label" class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">账户</label><select id="edit-account" class="w-full rounded-xl h-14 px-3 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200"></select></div>
+                <div id="edit-category-wrapper" class="w-1/2"><label class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">分类</label><select id="edit-category" class="w-full rounded-xl h-14 px-2 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200"></select></div>
+            </div>
+            <div id="edit-aa-wrapper" class="flex items-center gap-2 px-3 py-2 mt-1 bg-indigo-50 rounded-xl border border-indigo-100 hidden">
+                <input type="checkbox" id="edit-is-shared" class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                <label for="edit-is-shared" class="text-[13px] font-bold text-indigo-700 select-none flex items-center gap-1.5 ml-1"><i class="fa-solid fa-people-arrows"></i> 家庭共同开支 (AA)</label>
+            </div>
+            <div><label class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">备注说明</label><input type="text" id="edit-text" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-800 bg-gray-50 border border-gray-200"></div>
+            <button onclick="saveEditTransaction()" class="w-full h-14 bg-gray-900 active:bg-black text-white font-black text-lg rounded-xl shadow-xl active:scale-95 mt-5 transition-transform">确认修改并保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="settings-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-scale-balanced text-blue-500"></i> CFO 盘点台</h3>
+            <button onclick="closeSettingsModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <button onclick="openRecurringModal()" class="w-full bg-indigo-50 border border-indigo-100 text-indigo-700 py-3.5 rounded-xl mb-6 flex items-center justify-center gap-2 font-bold active:scale-95 transition-transform shadow-sm">
+            <i class="fa-solid fa-robot"></i> 管理每月自动记账 (房租/工资)
+        </button>
+
+        <div class="mb-6 border-t border-gray-100 pt-5">
+            <label class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">每月消费预算上限 (控制总流出)</label>
+            <div class="relative w-full">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">¥</span>
+                <input type="number" id="monthly-budget-input" placeholder="留空不设限" step="100" class="w-full pl-8 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 font-black text-[17px] text-gray-800 bg-gray-50">
+            </div>
+        </div>
+        
+        <h4 class="text-[15px] font-black text-gray-900 mb-2 mt-5 border-t border-gray-100 pt-5">⚖️ 资产盘点 (系统平账)</h4>
+        <p class="text-[11px] font-medium text-gray-500 mb-4 bg-blue-50/80 p-3 rounded-xl border border-blue-100 leading-relaxed">填入当前真实余额，系统自动生成留痕“平账交易”。非经营性大额收入也在此调整。</p>
+        <div class="mb-5 flex items-center gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+            <label class="block text-[13px] font-black text-gray-700 whitespace-nowrap">盘点生效时间</label>
+            <input type="date" id="calib-date" class="w-full bg-transparent text-[15px] focus:outline-none font-bold text-blue-600 text-right" required>
+        </div>
+        <div id="calibration-container" class="space-y-1 mb-6 max-h-[30vh] overflow-y-auto pr-2"></div>
+        <button onclick="saveSettingsAndCalibrate()" class="w-full bg-blue-600 text-white py-4 rounded-xl text-[16px] font-black shadow-lg shadow-blue-500/30 mb-3 active:scale-95 transition-transform">保存并执行盘点</button>
+        <button onclick="clearAllData()" class="w-full bg-red-50 text-red-600 border border-red-100 py-3.5 rounded-xl text-xs font-bold active:bg-red-100 transition-colors"><i class="fa-solid fa-trash mr-1"></i> 重置清空所有数据</button>
+    </div>
+</div>
+
+<div id="recurring-modal" class="modal-overlay" style="z-index: 10001;">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-robot text-indigo-500"></i> 自动化订阅中心</h3>
+            <button onclick="closeRecurringModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-arrow-left"></i></button>
+        </div>
+        <p class="text-[11px] font-medium text-gray-500 mb-4 bg-indigo-50/80 p-3 rounded-xl border border-indigo-100 leading-relaxed">
+            设置后，系统将在每月的第一次打开时，自动在当月 1 号生成以下固定收支。
+        </p>
+
+        <div class="mb-5 border-b border-gray-100 pb-4">
+            <h4 class="text-[13px] font-bold text-gray-800 mb-2">当前生效规则：</h4>
+            <ul id="recurring-list" class="space-y-2 max-h-[25vh] overflow-y-auto pr-1"></ul>
+        </div>
+
+        <h4 class="text-[13px] font-bold text-gray-800 mb-3"><i class="fa-solid fa-plus text-blue-500"></i> 新增自动化任务</h4>
+        <div class="space-y-3">
+            <div class="flex gap-2">
+                <select id="rec-type" class="w-[30%] rounded-xl h-12 px-2 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200 text-sm">
+                    <option value="expense">支出</option>
+                    <option value="income">收入</option>
+                </select>
+                <input type="number" id="rec-amount" class="w-[70%] rounded-xl h-12 px-3 focus:outline-none font-black text-lg text-gray-900 bg-gray-50 border border-gray-200" placeholder="金额 (¥)" step="0.01">
+            </div>
+            <div class="flex gap-2">
+                <select id="rec-account" class="w-1/2 rounded-xl h-12 px-2 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200 text-sm"></select>
+                <select id="rec-category" class="w-1/2 rounded-xl h-12 px-2 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200 text-sm"></select>
+            </div>
+            <input type="text" id="rec-text" class="w-full rounded-xl h-12 px-3 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200 text-sm" placeholder="备注说明 (如: 房租、底薪)">
+            <button onclick="saveRecurringTask()" class="w-full h-12 bg-indigo-600 text-white font-bold rounded-xl active:scale-95 transition-transform shadow-md">添加自动化任务</button>
+        </div>
+    </div>
+</div>
+
 <div id="transfer-modal" class="modal-overlay">
     <div class="modal-content">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold text-lg text-gray-800">跨设备备份与恢复</h3>
-            <button onclick="closeTransferModal()" class="text-gray-400 hover:text-gray-600 p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-cloud text-blue-500"></i> 数据舱</h3>
+            <button onclick="closeTransferModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <p class="text-sm text-gray-600 mb-4">防止数据丢失或更换设备，请定期生成数据码保存。</p>
-        <div class="mb-5">
-            <button onclick="generateDataCode()" class="w-full bg-blue-50 text-blue-600 border border-blue-200 py-3 rounded-xl text-sm font-bold active:bg-blue-100 transition-colors">
-                <i class="fa-solid fa-copy mr-1"></i> 生成并复制当前数据码
-            </button>
-        </div>
-        <hr class="border-gray-100 my-4">
+        <div class="mb-6"><button onclick="generateDataCode()" class="w-full bg-blue-50 text-blue-600 border border-blue-100 py-3.5 rounded-xl text-[15px] font-black active:scale-95 transition-transform"><i class="fa-solid fa-copy mr-1"></i> 生成并复制数据代码</button></div>
+        <hr class="border-gray-100 my-6">
         <div>
-            <textarea id="import-code" class="w-full h-24 p-3 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 text-xs text-gray-600 resize-none mb-2" placeholder="将复制的数据码粘贴到这里..."></textarea>
-            <button onclick="importDataCode()" class="w-full bg-gray-900 text-white py-3 rounded-xl text-sm font-bold active:bg-gray-800 transition-colors">
-                <i class="fa-solid fa-download mr-1"></i> 导入并覆盖恢复数据
-            </button>
-            <p class="text-[10px] text-red-500 mt-2 text-center hidden" id="import-error"></p>
+            <textarea id="import-code" class="w-full h-28 p-4 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 text-xs font-mono text-gray-600 resize-none mb-4 bg-gray-50 shadow-inner" placeholder="粘贴代码恢复数据..."></textarea>
+            <button onclick="importDataCode()" class="w-full bg-gray-900 text-white py-3.5 rounded-xl text-[15px] font-black active:scale-95 transition-transform shadow-xl"><i class="fa-solid fa-download mr-1"></i> 覆盖恢复数据</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- 核心配置 ---
+    function showGlobalToast(msg, type = 'success') {
+        const toast = document.getElementById('global-toast'); const icon = document.getElementById('global-toast-icon'); const text = document.getElementById('global-toast-text');
+        text.innerText = msg;
+        if(type === 'success') icon.className = 'fa-solid fa-circle-check text-green-500 text-xl'; else if(type === 'error') icon.className = 'fa-solid fa-circle-xmark text-red-500 text-xl'; else icon.className = 'fa-solid fa-circle-info text-blue-500 text-xl';
+        toast.classList.remove('global-toast-hidden'); toast.classList.add('global-toast-visible');
+        if (navigator.vibrate) navigator.vibrate(type === 'error' ? [50, 50, 50] : 50);
+        setTimeout(() => { toast.classList.remove('global-toast-visible'); toast.classList.add('global-toast-hidden'); }, 3000);
+    }
+
     const accountTypes = [
-        { id: 'alipay', name: '支付宝', icon: 'fa-alipay', colorClass: 'grad-alipay', isPersonal: true },
-        { id: 'wechat', name: '微信余额', icon: 'fa-weixin', colorClass: 'grad-wechat', isPersonal: true },
-        { id: 'boc', name: '中国银行', icon: 'fa-building-columns', colorClass: 'grad-boc', isPersonal: true },
-        { id: 'icbc', name: '工商银行', icon: 'fa-building-columns', colorClass: 'grad-icbc', isPersonal: true },
-        { id: 'abc', name: '农业银行', icon: 'fa-leaf', colorClass: 'grad-abc', isPersonal: true },
-        { id: 'spdb', name: '浦发银行', icon: 'fa-building-columns', colorClass: 'grad-spdb', isPersonal: true },
-        { id: 'partner', name: '我对象', icon: 'fa-heart', colorClass: 'grad-partner', isPersonal: false },
-        { id: 'stock', name: '股票账户', icon: 'fa-arrow-trend-up', colorClass: 'grad-stock', isPersonal: true },
-        { id: 'fund', name: '基金账户', icon: 'fa-seedling', colorClass: 'grad-fund', isPersonal: true }
+        { id: 'alipay', name: '支付宝', icon: 'fa-alipay', colorClass: 'grad-alipay', isPersonal: true, group: 'daily', groupName: '个人活期' },
+        { id: 'wechat', name: '微信余额', icon: 'fa-weixin', colorClass: 'grad-wechat', isPersonal: true, group: 'daily', groupName: '个人活期' },
+        { id: 'boc', name: '中国银行', icon: 'fa-building-columns', colorClass: 'grad-boc', isPersonal: true, group: 'safe', groupName: '个人稳健' },
+        { id: 'icbc', name: '工商银行', icon: 'fa-building-columns', colorClass: 'grad-icbc', isPersonal: true, group: 'safe', groupName: '个人稳健' },
+        { id: 'abc', name: '农业银行', icon: 'fa-leaf', colorClass: 'grad-abc', isPersonal: true, group: 'safe', groupName: '个人稳健' },
+        { id: 'spdb', name: '浦发银行', icon: 'fa-building-columns', colorClass: 'grad-spdb', isPersonal: true, group: 'safe', groupName: '个人稳健' },
+        { id: 'social', name: '🏥 医保公积金', icon: 'fa-shield-heart', colorClass: 'grad-social', isPersonal: true, group: 'safe', groupName: '受限不动产' },
+        { id: 'stock', name: '股票账户', icon: 'fa-arrow-trend-up', colorClass: 'grad-stock', isPersonal: true, group: 'invest', groupName: '生钱投资' },
+        { id: 'fund', name: '基金账户', icon: 'fa-seedling', colorClass: 'grad-fund', isPersonal: true, group: 'invest', groupName: '生钱投资' },
+        { id: 'insurance', name: '🛡️ 商业保险单', icon: 'fa-file-shield', colorClass: 'grad-insurance', isPersonal: true, group: 'insurance', groupName: '保命防御' },
+        { id: 'credit', name: '💳 花呗信用卡', icon: 'fa-credit-card', colorClass: 'grad-credit', isPersonal: true, group: 'debt', groupName: '透支负债' },
+        { id: 'partner_active', name: '👩‍❤️‍👨 对象活期/工资', icon: 'fa-wallet', colorClass: 'grad-partner-active', isPersonal: false, group: 'daily', groupName: '家庭活期' },
+        { id: 'partner_saving', name: '🏠 对象定存/房产', icon: 'fa-house-lock', colorClass: 'grad-partner-saving', isPersonal: false, group: 'safe', groupName: '家庭稳健' },
+        { id: 'partner', name: '对象(历史)', icon: 'fa-heart', colorClass: 'grad-partner', isPersonal: false, group: 'daily', groupName: '外部', hideInSelect: true }
     ];
 
-    // 智能动态分类字典
+    const nonRoutineKeywords = ['旅行', '医疗健康', '数码家电', '礼物人情', '房贷车贷分期'];
+
     const categoriesMap = {
-        'expense': ['🍔 餐饮', '🛒 超市日用', '🚗 交通出行', '🏠 住房水电', '📚 学习成长', '💊 医疗健康', '👗 衣物美妆', '📱 数码家电', '🎮 社交娱乐', '🎁 礼物人情', '✈️ 旅行', '🐾 宠物', '📝 其他支出'],
-        'income': ['💰 工资收入', '📈 投资理财', '🧧 红包奖金', '🛍️ 闲置二手', '📝 其他收入'],
-        'refund': ['↩️ 退款冲销', '🔄 往来结算', '✅ 还款结清']
+        'expense': ['🍔 餐饮', '🛒 超市日用', '🚗 交通出行', '🏠 房租物业水电', '💳 房贷车贷分期', '📚 学习成长', '💊 医疗健康', '👗 衣物美妆', '📱 数码家电', '🎮 社交娱乐', '🎁 礼物人情', '✈️ 旅行', '🐾 宠物', '📝 其他支出'],
+        'income': ['💰 工资收入', '🧧 年终奖金', '🏥 医保公积金入账', '👩‍👧 生活费(父母)', '👩‍❤️‍👨 生活费(对象)', '↩️ 退款/医保报销', '🛍️ 闲置二手', '📝 其他收入'],
+        'pnl': ['📈 投资盈利', '📉 投资亏损']
     };
 
-    // --- DOM 元素 ---
-    const totalBalanceEl = document.getElementById('total-balance');
-    const accountContainer = document.getElementById('account-container');
-    const accountSelect = document.getElementById('account-select');
-    const categorySelect = document.getElementById('category');
-    const list = document.getElementById('list');
-    const form = document.getElementById('form');
-    const text = document.getElementById('text');
-    const amount = document.getElementById('amount');
-    const datePicker = document.getElementById('tx-date');
-    const monthFilter = document.getElementById('month-filter');
-    const budgetBar = document.getElementById('budget-bar');
-    const budgetText = document.getElementById('budget-text');
-    const budgetWarning = document.getElementById('budget-warning');
+    const smartRules = [
+        { regex: /瑞幸|星巴克|库迪|麦当劳|肯德基|外卖|饿了么|美团|吃饭|聚餐|早饭|午饭|晚饭|夜宵/, type: 'expense', category: '🍔 餐饮' },
+        { regex: /淘宝|拼多多|京东|买菜|超市|便利店|天猫|买衣服|日用/, type: 'expense', category: '🛒 超市日用' },
+        { regex: /地铁|滴滴|打车|公交|单车|高德|机票|火车票|高铁|加油|停车/, type: 'expense', category: '🚗 交通出行' },
+        { regex: /房租|电费|水费|燃气|宽带|交租|物业/, type: 'expense', category: '🏠 房租物业水电', addTags: ['固定支出'] },
+        { regex: /房贷|车贷|还贷|还按揭/, type: 'expense', category: '💳 房贷车贷分期', addTags: ['固定支出'] },
+        { regex: /看病|买药|医院|挂号|体检/, type: 'expense', category: '💊 医疗健康', addTags: ['可报销'] },
+        { regex: /花呗消费|信用卡刷卡/, type: 'expense', account: 'credit' },
+        { regex: /还花呗|还信用卡|还款|信用卡还款/, type: 'transfer', toAccount: 'credit' },
+        { regex: /证券|券商|买股票|买基金|加仓|定投/, type: 'transfer', toAccount: 'stock' },
+        { regex: /工资|发工资|底薪/, type: 'income', category: '💰 工资收入' },
+        { regex: /报销|退款/, type: 'income', category: '↩️ 退款/医保报销' },
+        { regex: /复盘|总结|反思/, addTags: ['投资复盘'] }
+    ];
+
+    let currentType = 'expense'; let expenseChart = null; 
+    let lastAddedTxId = null; let undoTimeout = null; let editingTxId = null;
+    let isPrivacyMode = localStorage.getItem('speed_ledger_privacy') === 'true';
+    let currentActiveTags = new Set();
     
-    let currentType = 'expense';
-    let expenseChart = null;
-    let lastAddedTxId = null;
-    let undoTimeout = null;
-    
-    // --- 本地存储数据 ---
-    const KEY_TX = 'speed_ledger_tx_final';
-    const KEY_BAL = 'speed_ledger_bal_final';
+    const KEY_TX = 'speed_ledger_tx_final'; 
+    const KEY_BAL = 'speed_ledger_bal_final'; 
     const KEY_BUDGET = 'speed_ledger_budget_final';
-    
+    const KEY_FUNDS = 'speed_ledger_funds_v1';
+    const KEY_REC = 'speed_ledger_rec_v1';
+    const KEY_REC_LOG = 'speed_ledger_rec_log';
+
     let transactions = JSON.parse(localStorage.getItem(KEY_TX)) || [];
     let initialBalances = JSON.parse(localStorage.getItem(KEY_BAL)) || {};
     let monthlyBudget = parseFloat(localStorage.getItem(KEY_BUDGET)) || 0;
+    
+    let targetFunds = JSON.parse(localStorage.getItem(KEY_FUNDS)) || [
+        { id: 'f1', name: '旅行游玩基金', icon: '✈️', target: 10000, current: 0 },
+        { id: 'f2', name: '数码换新基金', icon: '💻', target: 8000, current: 0 },
+        { id: 'f3', name: '家庭防御备用金', icon: '🛡️', target: 50000, current: 0 }
+    ];
 
+    let recurringTasks = JSON.parse(localStorage.getItem(KEY_REC)) || [];
+    let recurringLogs = JSON.parse(localStorage.getItem(KEY_REC_LOG)) || [];
+
+    if (initialBalances['partner'] !== undefined && initialBalances['partner'] !== 0) {
+        initialBalances['partner_active'] = (initialBalances['partner_active'] || 0) + initialBalances['partner'];
+        initialBalances['partner'] = 0; localStorage.setItem(KEY_BAL, JSON.stringify(initialBalances));
+    }
+    transactions.forEach(t => {
+        if(t.accountId === 'partner') t.accountId = 'partner_active';
+        if(t.fromAccountId === 'partner') t.fromAccountId = 'partner_active';
+        if(t.isShared === undefined) t.isShared = false;
+        if(t.tags === undefined) t.tags = [];
+    });
     accountTypes.forEach(acc => { if (initialBalances[acc.id] === undefined) initialBalances[acc.id] = 0; });
 
-    // 格式化金额 (千分位)
-    function formatMoney(num) {
-        return Number(num).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function formatMoney(num) { return Number(num).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function displayMoney(amount, showSign = false) {
+        if (isPrivacyMode) return '****';
+        let prefix = ''; if (showSign && amount > 0) prefix = '+'; else if (amount < 0) return `-¥${formatMoney(Math.abs(amount))}`;
+        return `${prefix}¥${formatMoney(amount)}`;
     }
 
-    // 动态更新分类下拉框
-    function updateCategoryOptions(type) {
+    window.togglePrivacy = function() {
+        isPrivacyMode = !isPrivacyMode; localStorage.setItem('speed_ledger_privacy', isPrivacyMode);
+        document.getElementById('eye-icon').className = isPrivacyMode ? 'fa-solid fa-eye-slash text-gray-500 clickable-icon' : 'fa-solid fa-eye text-gray-500 clickable-icon';
+        render(); 
+    };
+
+    function updateCategoryOptions(type, selectEl = document.getElementById('category')) {
+        if(type === 'transfer' || type === 'adjust') return;
         const opts = categoriesMap[type] || categoriesMap['expense'];
-        categorySelect.innerHTML = opts.map(c => `<option value="${c}">${c}</option>`).join('');
+        selectEl.innerHTML = opts.map(c => `<option value="${c}">${c}</option>`).join('');
     }
 
-    // --- 初始化 UI ---
-    function initUI() {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        
-        datePicker.value = `${yyyy}-${mm}-${dd}`;
-        monthFilter.value = `${yyyy}-${mm}`;
+    function updateYearOptions() {
+        const years = new Set(transactions.map(t => t.dateObj.substring(0, 4)));
+        const currentYear = new Date().getFullYear().toString(); years.add(currentYear);
+        const sortedYears = Array.from(years).sort((a, b) => b - a);
+        const yf = document.getElementById('year-filter');
+        yf.innerHTML = sortedYears.map(y => `<option value="${y}">${y}年</option>`).join('');
+        if (!Array.from(yf.options).some(opt => opt.value === yf.value)) yf.value = currentYear;
+    }
 
-        monthFilter.addEventListener('change', render);
-        accountSelect.innerHTML = accountTypes.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
-        
-        updateCategoryOptions('expense'); // 默认加载支出分类
-
-        const btns = document.querySelectorAll('.segmented-btn');
-        btns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                btns.forEach(b => b.classList.remove('active', 'text-red-500', 'text-green-500', 'text-blue-500'));
-                const clickedBtn = e.target;
-                clickedBtn.classList.add('active');
-                currentType = clickedBtn.dataset.type;
-                
-                // 颜色和分类联动
-                updateCategoryOptions(currentType);
-                if(currentType === 'expense') clickedBtn.classList.add('text-red-500');
-                else if(currentType === 'income') clickedBtn.classList.add('text-green-500');
-                else clickedBtn.classList.add('text-blue-500');
+    function initTags() {
+        const pills = document.querySelectorAll('.tag-pill');
+        pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                const tag = pill.getAttribute('data-tag');
+                if (currentActiveTags.has(tag)) { currentActiveTags.delete(tag); pill.classList.remove('active'); } 
+                else { currentActiveTags.add(tag); pill.classList.add('active'); }
             });
         });
+    }
+    
+    function setTagUI(tagStr, isActive) {
+        document.querySelectorAll('.tag-pill').forEach(p => {
+            if(p.getAttribute('data-tag') === tagStr) {
+                if(isActive) { p.classList.add('active'); currentActiveTags.add(tagStr); }
+                else { p.classList.remove('active'); currentActiveTags.delete(tagStr); }
+            }
+        });
+    }
+
+    function highlightField(elId) {
+        const el = document.getElementById(elId); if(!el) return;
+        el.classList.remove('smart-animate'); void el.offsetWidth; el.classList.add('smart-animate');
+    }
+
+    document.getElementById('text').addEventListener('input', function(e) {
+        const val = e.target.value; if(val.length < 2) return; 
+        for(let rule of smartRules) {
+            if(rule.regex.test(val)) {
+                if(rule.type && currentType !== rule.type) { document.querySelector(`button[data-type="${rule.type}"]`).click(); }
+                if(rule.category) { const catSelect = document.getElementById('category'); if(catSelect.value !== rule.category) { catSelect.value = rule.category; highlightField('category-wrapper'); } }
+                if(rule.account) { const accSelect = document.getElementById('account-select'); if(accSelect.value !== rule.account) { accSelect.value = rule.account; highlightField('account-wrapper'); } }
+                if(rule.toAccount && currentType === 'transfer') { const accSelect = document.getElementById('account-select'); if(accSelect.value !== rule.toAccount) { accSelect.value = rule.toAccount; highlightField('account-wrapper'); } }
+                if(rule.addTags) { rule.addTags.forEach(t => setTagUI(t, true)); }
+            }
+        }
+    });
+
+    function runMonthlyAutomation() {
+        const today = new Date();
+        const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (recurringTasks.length > 0 && !recurringLogs.includes(currentMonthStr)) {
+            let addedCount = 0;
+            recurringTasks.forEach(task => {
+                const finalAmount = task.type === 'expense' ? -Math.abs(task.amount) : Math.abs(task.amount);
+                const newTx = {
+                    id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+                    text: task.text + ' (自动记账)',
+                    amount: finalAmount,
+                    category: task.category,
+                    type: task.type,
+                    accountId: task.accountId,
+                    fromAccountId: null,
+                    dateObj: `${currentMonthStr}-01`, 
+                    timestamp: Date.now(),
+                    isShared: false,
+                    tags: ['固定支出', '🤖自动生成']
+                };
+                transactions.unshift(newTx);
+                addedCount++;
+            });
+            recurringLogs.push(currentMonthStr);
+            localStorage.setItem(KEY_REC_LOG, JSON.stringify(recurringLogs));
+            localStorage.setItem(KEY_TX, JSON.stringify(transactions));
+            
+            setTimeout(() => { showGlobalToast(`自动化引擎：成功生成了 ${addedCount} 笔本月固定收支！`, 'success'); render(); }, 1000);
+        }
+    }
+
+    function initUI() {
+        if (isPrivacyMode) document.getElementById('eye-icon').className = 'fa-solid fa-eye-slash text-gray-400 clickable-icon';
+
+        const today = new Date();
+        document.getElementById('tx-date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        document.getElementById('month-filter').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+        document.getElementById('month-filter').addEventListener('change', render);
+        document.getElementById('year-filter').addEventListener('change', renderAnnualCheckup);
+
+        const accOptions = accountTypes.filter(a => !a.hideInSelect).map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
+        document.getElementById('account-select').innerHTML = accOptions;
+        document.getElementById('from-account-select').innerHTML = accOptions;
+        
+        updateCategoryOptions('expense'); initTags();
+
+        const btns = document.querySelectorAll('.segmented-btn'); const aaWrapper = document.getElementById('aa-wrapper');
+        
+        btns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                btns.forEach(b => b.classList.remove('active', 'text-red-500', 'text-green-500', 'text-purple-500', 'text-orange-500'));
+                const clickedBtn = e.target; clickedBtn.classList.add('active'); currentType = clickedBtn.dataset.type;
+                
+                aaWrapper.classList.add('hidden');
+
+                if(currentType === 'transfer') {
+                    document.getElementById('category-wrapper').classList.add('hidden'); document.getElementById('from-account-wrapper').classList.remove('hidden');
+                    document.getElementById('account-label').innerText = '转入账户';
+                    clickedBtn.classList.add('text-purple-500');
+                } else if(currentType === 'pnl') {
+                    document.getElementById('category-wrapper').classList.remove('hidden'); document.getElementById('from-account-wrapper').classList.add('hidden');
+                    document.getElementById('account-label').innerText = '投资账户';
+                    updateCategoryOptions('pnl'); clickedBtn.classList.add('text-orange-500');
+                } else {
+                    document.getElementById('category-wrapper').classList.remove('hidden'); document.getElementById('from-account-wrapper').classList.add('hidden');
+                    document.getElementById('account-label').innerText = '消费账户'; updateCategoryOptions(currentType);
+                    if(currentType === 'expense') { clickedBtn.classList.add('text-red-500'); aaWrapper.classList.remove('hidden'); } 
+                    else { clickedBtn.classList.add('text-green-500'); }
+                }
+            });
+        });
+        
+        document.getElementById('amount').addEventListener('blur', function() { if(this.value) this.value = parseFloat(this.value).toFixed(2); });
+        
+        runMonthlyAutomation();
         render();
     }
 
-    function render() {
-        localStorage.setItem(KEY_TX, JSON.stringify(transactions));
-        localStorage.setItem(KEY_BAL, JSON.stringify(initialBalances));
-        localStorage.setItem(KEY_BUDGET, monthlyBudget.toString());
-
-        const selectedMonth = monthFilter.value; 
+    function getCalculatedBalances() {
         const balances = { ...initialBalances };
-        let personalTotal = 0, partnerTotal = 0;
+        let personalTotal = 0, partnerTotal = 0, activeTotal = 0, savingTotal = 0, investTotal = 0, insuranceTotal = 0, assetTotal = 0, liabilityTotal = 0;
         
         accountTypes.forEach(acc => {
-            if (acc.isPersonal) personalTotal += (initialBalances[acc.id] || 0);
-            else partnerTotal += (initialBalances[acc.id] || 0);
-        });
-
-        transactions.forEach(t => {
-            if (balances[t.accountId] !== undefined) balances[t.accountId] += t.amount;
-            const accInfo = accountTypes.find(a => a.id === t.accountId);
-            if (accInfo) {
-                if (accInfo.isPersonal) personalTotal += t.amount;
-                else partnerTotal += t.amount;
+            const bal = initialBalances[acc.id] || 0;
+            if (acc.isPersonal) {
+                personalTotal += bal;
+                if (acc.group === 'active' || acc.group === 'daily') activeTotal += bal;
+                if (acc.group === 'saving') savingTotal += bal;
+                if (acc.group === 'invest') investTotal += bal;
+                if (acc.group === 'insurance') insuranceTotal += bal;
+            } else {
+                partnerTotal += bal;
+                if (acc.group === 'active' || acc.group === 'daily') activeTotal += bal;
+                if (acc.group === 'saving') savingTotal += bal;
+                if (acc.group === 'invest') investTotal += bal;
             }
         });
 
-        // 应用千分位格式化
-        totalBalanceEl.innerText = `¥${formatMoney(personalTotal)}`;
-        const pBal = document.getElementById('partner-balance');
-        if (pBal) pBal.innerText = `¥${formatMoney(partnerTotal)}`;
-        
-        renderAccounts(balances);
-        const monthTxs = transactions.filter(t => t.dateObj.startsWith(selectedMonth));
-        renderBudget(monthTxs);
-        renderTransactions(monthTxs);
-        renderChart(monthTxs);
+        transactions.forEach(t => {
+            let handleAcc = (accId, amount) => {
+                if (balances[accId] !== undefined) balances[accId] += amount;
+                const acc = accountTypes.find(a => a.id === accId);
+                if (acc) {
+                    if (acc.isPersonal) {
+                        personalTotal += amount;
+                        if (acc.group === 'active' || acc.group === 'daily') activeTotal += amount;
+                        if (acc.group === 'saving') savingTotal += amount;
+                        if (acc.group === 'invest') investTotal += amount;
+                        if (acc.group === 'insurance') insuranceTotal += amount;
+                    } else {
+                        partnerTotal += amount;
+                        if (acc.group === 'active' || acc.group === 'daily') activeTotal += amount;
+                        if (acc.group === 'saving') savingTotal += amount;
+                        if (acc.group === 'invest') investTotal += amount;
+                    }
+                }
+            };
+            if(t.type === 'transfer') { handleAcc(t.fromAccountId, -t.amount); handleAcc(t.accountId, t.amount); } 
+            else handleAcc(t.accountId, t.amount);
+        });
+
+        Object.keys(balances).forEach(key => {
+            const acc = accountTypes.find(a => a.id === key);
+            if(acc && acc.isPersonal) {
+                if(balances[key] > 0) assetTotal += balances[key];
+                else if(balances[key] < 0) liabilityTotal += balances[key];
+            }
+        });
+        return { balances, personalTotal, partnerTotal, activeTotal, savingTotal, investTotal, insuranceTotal, assetTotal, liabilityTotal };
     }
 
-    function renderBudget(monthTxs) {
+    function renderAIAssistant() {
+        const container = document.getElementById('ai-alerts-container'); if(!container) return;
+        let alertsHTML = ''; const today = new Date(); const d = today.getDate(); const nowMs = Date.now();
+
+        if (d >= 5 && d <= 10) alertsHTML += `<div class="bg-red-50/90 border border-red-100 rounded-[18px] p-4 flex gap-3 items-start shadow-sm"><i class="fa-solid fa-credit-card text-red-500 mt-1 text-lg"></i><div><p class="text-[13px] font-black text-red-800">信用出账期提醒</p><p class="text-[11px] font-bold text-red-600 mt-1 leading-relaxed">花呗/信用卡进入还款期，请核对是否需【流转还款】避免逾期。</p></div></div>`;
+        
+        const reimbursableCount = transactions.filter(t => t.tags && t.tags.includes('可报销') && t.timestamp > nowMs - 30*24*3600*1000).length;
+        const refundedCount = transactions.filter(t => t.category && t.category.includes('报销') && t.timestamp > nowMs - 30*24*3600*1000).length;
+        if (reimbursableCount > refundedCount) alertsHTML += `<div class="bg-orange-50/90 border border-orange-100 rounded-[18px] p-4 flex gap-3 items-start shadow-sm"><i class="fa-solid fa-file-invoice text-orange-500 mt-1 text-lg"></i><div><p class="text-[13px] font-black text-orange-800">报销追踪</p><p class="text-[11px] font-bold text-orange-600 mt-1 leading-relaxed">近30天您有待报销款项未收回，请跟进流程。</p></div></div>`;
+        
+        if (d >= 28 || d <= 2) alertsHTML += `<div class="bg-blue-50/90 border border-blue-100 rounded-[18px] p-4 flex gap-3 items-start shadow-sm"><i class="fa-solid fa-calendar-check text-blue-500 mt-1 text-lg"></i><div><p class="text-[13px] font-black text-blue-800">CFO 月度结账期</p><p class="text-[11px] font-bold text-blue-600 mt-1 leading-relaxed">建议花1分钟去【盘点台】校准真实余额，确保资产对账精准。</p></div></div>`;
+        
+        const unreviewedPnl = transactions.filter(t => t.type === 'pnl' && t.timestamp > nowMs - 7*24*3600*1000 && (!t.tags || !t.tags.includes('投资复盘')));
+        if (unreviewedPnl.length > 0) alertsHTML += `<div class="bg-purple-50/90 border border-purple-100 rounded-[18px] p-4 flex gap-3 items-start shadow-sm"><i class="fa-solid fa-chart-pie text-purple-500 mt-1 text-lg"></i><div><p class="text-[13px] font-black text-purple-800">复盘提醒</p><p class="text-[11px] font-bold text-purple-600 mt-1 leading-relaxed">近期投资操作未写复盘。打上【投资复盘】标签积累交易认知。</p></div></div>`;
+
+        container.innerHTML = alertsHTML;
+    }
+
+    function renderWallStreetStrategy() {
+        const winEl = document.getElementById('strategy-winrate'); const pnlEl = document.getElementById('strategy-pnl'); const adviceBox = document.getElementById('strategy-advice-box');
+        if(!winEl || !pnlEl || !adviceBox) return;
+
+        const nowMs = Date.now(); const recentPnl = transactions.filter(t => t.type === 'pnl' && t.timestamp > nowMs - 30*24*3600*1000);
+        
+        if(recentPnl.length === 0) {
+            winEl.innerText = '-'; pnlEl.innerText = '¥0.00'; pnlEl.className = 'text-2xl font-black text-gray-900 data-money';
+            adviceBox.innerHTML = '<i class="fa-solid fa-mug-hot text-orange-400 mr-1.5"></i>近30天无投资动作。耐心等待击球区，最好的防守是手握现金。'; return;
+        }
+
+        const winCount = recentPnl.filter(t => t.amount > 0).length; const winRate = (winCount / recentPnl.length) * 100;
+        const totalPnl = recentPnl.reduce((sum, t) => sum + t.amount, 0);
+
+        winEl.innerText = `${winRate.toFixed(0)}%`; pnlEl.innerText = displayMoney(totalPnl, true);
+        pnlEl.className = `text-2xl font-black data-money ${totalPnl >= 0 ? 'text-red-600' : 'text-green-600'}`;
+
+        let advice = '';
+        if(totalPnl < 0) advice = `<strong>【逆向风控】</strong> 近期面临回撤。华尔街法则：恐慌时贪婪。请审查持仓基本面，若未恶化切忌盲目割肉，可开启【定投(DCA)】摊薄成本。`;
+        else advice = `<strong>【止盈风控】</strong> 近期获取了正收益！市场情绪可能过热。建议设定【动态止盈点】，将部分利润转入稳健定存。`;
+        adviceBox.innerHTML = advice;
+    }
+
+    function renderTargetFunds() {
+        const container = document.getElementById('funds-container'); if(!container) return; container.innerHTML = '';
+        
+        targetFunds.forEach(fund => {
+            let pct = fund.target > 0 ? (fund.current / fund.target) * 100 : 0; if(pct > 100) pct = 100;
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-[24px] p-5 border border-emerald-100/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] cursor-pointer transition-transform active:scale-95";
+            card.onclick = () => openFundModal(fund.id);
+            card.innerHTML = `
+                <div class="flex justify-between items-end mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[22px] shadow-sm">${fund.icon}</div>
+                        <span class="text-[15px] font-black text-gray-800 tracking-tight">${fund.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[17px] font-black text-emerald-600 tracking-tight">${isPrivacyMode ? '****' : formatMoney(fund.current)}</span>
+                        <span class="text-[11px] font-bold text-gray-400"> / ${isPrivacyMode ? '****' : formatMoney(fund.target)}</span>
+                    </div>
+                </div>
+                <div class="fund-progress-container"><div class="fund-progress-bar" style="width: ${pct}%"></div></div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    const fundModal = document.getElementById('fund-modal');
+    window.openFundModal = (id = null) => {
+        if(id) {
+            const fund = targetFunds.find(f => f.id === id);
+            if(fund) {
+                document.getElementById('fund-id').value = fund.id; document.getElementById('fund-icon').value = fund.icon;
+                document.getElementById('fund-name').value = fund.name; document.getElementById('fund-target').value = fund.target;
+                document.getElementById('fund-current').value = fund.current; document.getElementById('fund-delete-btn').classList.remove('hidden');
+            }
+        } else {
+            document.getElementById('fund-id').value = ''; document.getElementById('fund-icon').value = '✨';
+            document.getElementById('fund-name').value = ''; document.getElementById('fund-target').value = '';
+            document.getElementById('fund-current').value = '0'; document.getElementById('fund-delete-btn').classList.add('hidden');
+        }
+        fundModal.style.display = 'flex';
+    }
+
+    window.closeFundModal = () => { fundModal.style.display = 'none'; }
+
+    window.saveFund = () => {
+        const id = document.getElementById('fund-id').value; const icon = document.getElementById('fund-icon').value || '✨';
+        const name = document.getElementById('fund-name').value; const target = parseFloat(document.getElementById('fund-target').value) || 0;
+        const current = parseFloat(document.getElementById('fund-current').value) || 0;
+
+        if(!name) { showGlobalToast("请输入基金名称", "error"); return; }
+
+        if(id) {
+            const idx = targetFunds.findIndex(f => f.id === id);
+            if(idx > -1) { targetFunds[idx] = { id, icon, name, target, current }; }
+        } else { targetFunds.push({ id: 'f' + Date.now(), icon, name, target, current }); }
+        
+        localStorage.setItem(KEY_FUNDS, JSON.stringify(targetFunds));
+        renderTargetFunds(); closeFundModal(); showGlobalToast("目标已保存");
+    }
+
+    window.deleteFund = () => {
+        const id = document.getElementById('fund-id').value;
+        if(!confirm("确定要删除这个储蓄目标吗？(不影响真实余额)")) return;
+        targetFunds = targetFunds.filter(f => f.id !== id);
+        localStorage.setItem(KEY_FUNDS, JSON.stringify(targetFunds));
+        renderTargetFunds(); closeFundModal(); showGlobalToast("目标已删除", "info");
+    }
+
+    function render() {
+        localStorage.setItem(KEY_TX, JSON.stringify(transactions)); localStorage.setItem(KEY_BAL, JSON.stringify(initialBalances)); localStorage.setItem(KEY_BUDGET, monthlyBudget.toString());
+
+        updateYearOptions();
+        const selectedMonth = document.getElementById('month-filter').value; 
+        const { balances, personalTotal, partnerTotal, activeTotal, savingTotal, investTotal, insuranceTotal, assetTotal, liabilityTotal } = getCalculatedBalances();
+
+        document.querySelectorAll('#total-balance').forEach(el => el.innerText = displayMoney(personalTotal));
+        document.getElementById('total-asset').innerText = displayMoney(assetTotal);
+        document.getElementById('total-liability').innerText = isPrivacyMode ? '****' : `-¥${formatMoney(Math.abs(liabilityTotal))}`;
+        
+        document.querySelectorAll('#active-balance').forEach(el => el.innerText = displayMoney(activeTotal));
+        document.querySelectorAll('#saving-balance').forEach(el => el.innerText = displayMoney(savingTotal));
+        document.querySelectorAll('#partner-balance').forEach(el => el.innerText = displayMoney(partnerTotal));
+        
+        renderAccounts(balances);
+        
+        const monthTxs = transactions.filter(t => t.dateObj.startsWith(selectedMonth));
+        renderMonthlyDashboard(monthTxs);
+        renderTransactions(transactions.slice(), 'recent-list', 30); 
+        renderTransactions(monthTxs, 'list', 0); 
+        
+        renderChart(monthTxs);
+        renderAIAssistant();
+        renderWallStreetStrategy();
+        renderAssetAllocation(activeTotal, savingTotal, investTotal, insuranceTotal);
+        renderAnnualCheckup();
+        renderTargetFunds();
+    }
+
+    function renderMonthlyDashboard(monthTxs) {
+        const monthIncome = monthTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+        const monthExpense = monthTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + Math.abs(t.amount), 0);
+        
+        const personalExpense = monthTxs.filter(t => t.type === 'expense' && !t.isShared).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+        const familyExpense = monthTxs.filter(t => t.type === 'expense' && t.isShared).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+        const personalRoutine = monthTxs.filter(t => t.type === 'expense' && !t.isShared && !nonRoutineKeywords.some(kw => t.category.includes(kw))).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+        const personalNonRoutine = personalExpense - personalRoutine;
+        
+        const trueExpenseLoss = personalExpense + (familyExpense / 2);
+        const monthTrueNet = monthIncome - trueExpenseLoss;
+
+        const routinePct = personalExpense > 0 ? ((personalRoutine / personalExpense) * 100).toFixed(0) + '%' : '0%';
+        const nonRoutinePct = personalExpense > 0 ? ((personalNonRoutine / personalExpense) * 100).toFixed(0) + '%' : '0%';
+
+        document.getElementById('month-income').innerText = displayMoney(monthIncome, true);
+        document.getElementById('month-expense').innerText = isPrivacyMode ? '-****' : `-¥${formatMoney(monthExpense)}`;
+        
+        document.getElementById('month-personal-expense').innerText = displayMoney(-personalExpense);
+        document.getElementById('month-routine-expense').innerText = displayMoney(-personalRoutine);
+        document.getElementById('month-nonroutine-expense').innerText = displayMoney(-personalNonRoutine);
+        
+        document.getElementById('month-routine-pct').innerText = routinePct;
+        document.getElementById('month-nonroutine-pct').innerText = nonRoutinePct;
+
+        document.getElementById('month-family-expense').innerText = displayMoney(-familyExpense);
+        document.getElementById('month-family-receivable').innerText = `对方应补偿我 (50%): ${displayMoney(familyExpense / 2)}`;
+        
+        const netEl = document.getElementById('month-true-net');
+        netEl.innerText = displayMoney(monthTrueNet, true);
+        netEl.className = `text-[28px] leading-none font-black tracking-tighter data-money ${monthTrueNet >= 0 ? 'text-blue-700' : 'text-red-600'}`;
+
+        const budgetText = document.getElementById('budget-text');
+        const budgetBar = document.getElementById('budget-bar');
+
         if (!monthlyBudget || monthlyBudget <= 0) {
-            budgetText.innerText = "未设置预算"; budgetBar.style.width = "0%"; budgetWarning.classList.add('hidden');
+            if(budgetText) budgetText.innerText = "未设"; 
+            if(budgetBar) budgetBar.style.width = "0%"; 
             return;
         }
-        const totalExpense = monthTxs.filter(t => t.amount < 0 && t.type === 'expense').reduce((acc, t) => acc + Math.abs(t.amount), 0);
-        let percentage = (totalExpense / monthlyBudget) * 100;
-        if (percentage > 100) percentage = 100;
+        let percentage = (monthExpense / monthlyBudget) * 100; if (percentage > 100) percentage = 100;
+        if(budgetText) budgetText.innerText = isPrivacyMode ? '****' : `¥${formatMoney(monthExpense)} / ¥${formatMoney(monthlyBudget)}`;
+        
+        if(budgetBar) {
+            budgetBar.style.width = `${percentage}%`;
+            budgetBar.classList.remove('bg-blue-500', 'bg-orange-500', 'bg-red-500');
+            if (percentage >= 90) { budgetBar.classList.add('bg-red-500'); } 
+            else if (percentage >= 75) { budgetBar.classList.add('bg-orange-500'); } 
+            else { budgetBar.classList.add('bg-blue-500'); }
+        }
+    }
 
-        budgetText.innerText = `¥${formatMoney(totalExpense)} / ¥${formatMoney(monthlyBudget)}`;
-        budgetBar.style.width = `${percentage}%`;
+    function renderAnnualCheckup() {
+        const selectedYear = document.getElementById('year-filter').value; if (!selectedYear) return;
+        const yearTxs = transactions.filter(t => t.dateObj.startsWith(selectedYear));
+        const yearIncome = yearTxs.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+        const yearExpense = yearTxs.filter(t => t.type === 'expense').reduce((acc, t) => acc + Math.abs(t.amount), 0);
+        const routineExpense = yearTxs.filter(t => t.type === 'expense' && !nonRoutineKeywords.some(kw => t.category.includes(kw))).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+        const nonRoutineExpense = yearExpense - routineExpense;
+        const yearNet = yearIncome - yearExpense;
+        
+        const routinePct = yearExpense > 0 ? ((routineExpense / yearExpense) * 100).toFixed(0) + '%' : '0%';
+        const nonRoutinePct = yearExpense > 0 ? ((nonRoutineExpense / yearExpense) * 100).toFixed(0) + '%' : '0%';
 
-        if (percentage >= 90) { budgetBar.classList.replace('bg-blue-500', 'bg-red-500'); budgetWarning.classList.remove('hidden'); } 
-        else if (percentage >= 75) { budgetBar.classList.replace('bg-blue-500', 'bg-yellow-500'); budgetWarning.classList.add('hidden'); } 
-        else { budgetBar.classList.remove('bg-red-500', 'bg-yellow-500'); budgetBar.classList.add('bg-blue-500'); budgetWarning.classList.add('hidden'); }
+        document.getElementById('year-income').innerText = displayMoney(yearIncome, true);
+        document.getElementById('year-expense').innerText = displayMoney(-yearExpense);
+        document.getElementById('year-routine-expense').innerText = displayMoney(-routineExpense);
+        document.getElementById('year-nonroutine-expense').innerText = displayMoney(-nonRoutineExpense);
+        
+        document.getElementById('year-routine-pct').innerText = routinePct;
+        document.getElementById('year-nonroutine-pct').innerText = nonRoutinePct;
+        
+        const netEl = document.getElementById('year-net'); netEl.innerText = displayMoney(yearNet, true);
+        netEl.className = `text-[26px] leading-none font-black tracking-tighter data-money ${yearNet >= 0 ? 'text-emerald-700' : 'text-red-600'}`;
+
+        const foodExpense = yearTxs.filter(t => t.type === 'expense' && (t.category.includes('餐饮') || t.category.includes('超市'))).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+        let engelRatio = 0; if (routineExpense > 0) engelRatio = (foodExpense / routineExpense) * 100;
+
+        const engelEl = document.getElementById('engel-number'); const engelBar = document.getElementById('engel-bar'); const adviceBox = document.getElementById('financial-advice');
+
+        if (routineExpense === 0) {
+            engelEl.innerText = `- %`; engelBar.style.width = `0%`;
+            adviceBox.innerHTML = `<p class="text-gray-500"><i class="fa-solid fa-circle-info"></i> 暂无足够日常支出数据，记账后将自动生成报告。</p>`; return;
+        }
+        engelEl.innerText = `${engelRatio.toFixed(1)}%`; engelBar.style.width = `${Math.min(engelRatio, 100)}%`;
+
+        let engelAdvice = '';
+        if (engelRatio >= 59) engelAdvice = `<p class="text-red-600"><i class="fa-solid fa-triangle-exclamation w-4"></i> <strong>极高生存成本：</strong> 恩格尔系数 ${engelRatio.toFixed(1)}%（>59%为贫困线）。请立即削减非必要开销。</p>`;
+        else if (engelRatio >= 50) engelAdvice = `<p class="text-orange-500"><i class="fa-solid fa-bell w-4"></i> <strong>温饱阶段：</strong> 恩格尔系数 ${engelRatio.toFixed(1)}%。饮食占了一大半，建议控制在 50% 以下。</p>`;
+        else if (engelRatio >= 40) engelAdvice = `<p class="text-blue-600"><i class="fa-solid fa-coffee w-4"></i> <strong>小康水平：</strong> 恩格尔系数 ${engelRatio.toFixed(1)}%。财务状况健康！可适度增加“自我成长”的投资。</p>`;
+        else if (engelRatio >= 30) engelAdvice = `<p class="text-purple-600"><i class="fa-solid fa-champagne-glasses w-4"></i> <strong>富裕级别：</strong> 恩格尔系数 ${engelRatio.toFixed(1)}%。务必做好长期的资产配置。</p>`;
+        else engelAdvice = `<p class="text-emerald-600"><i class="fa-solid fa-gem w-4"></i> <strong>极致富裕：</strong> 恩格尔系数 ${engelRatio.toFixed(1)}%。稳健守住财富是第一要务。</p>`;
+
+        let savingsRate = 0; let savingsAdvice = '';
+        if (yearIncome > 0) {
+            savingsRate = ((yearIncome - yearExpense) / yearIncome) * 100;
+            if (savingsRate < 0) savingsAdvice = `<p class="text-red-500 mt-1"><i class="fa-solid fa-skull w-4"></i> <strong>储蓄率崩塌：${savingsRate.toFixed(1)}%</strong>。严重入不敷出！</p>`;
+            else if (savingsRate < 20) savingsAdvice = `<p class="text-orange-500 mt-1"><i class="fa-solid fa-piggy-bank w-4"></i> <strong>储蓄率警告：${savingsRate.toFixed(1)}%</strong>。未达健康线（20%）。发工资请立即拨入目标储蓄。</p>`;
+            else savingsAdvice = `<p class="text-emerald-600 mt-1"><i class="fa-solid fa-piggy-bank w-4"></i> <strong>优秀储蓄率：${savingsRate.toFixed(1)}%</strong>。强大的资本积累能力！</p>`;
+        }
+        adviceBox.innerHTML = engelAdvice + '<hr class="border-gray-200/60 my-2.5">' + savingsAdvice;
+    }
+
+    function renderAssetAllocation(activeTotal, savingTotal, investTotal, insuranceTotal) {
+        const totalFamilyWealth = activeTotal + savingTotal + investTotal + insuranceTotal;
+        const activeRatio = totalFamilyWealth > 0 ? (activeTotal / totalFamilyWealth * 100) : 0;
+        const savingRatio = totalFamilyWealth > 0 ? (savingTotal / totalFamilyWealth * 100) : 0;
+        const investRatio = totalFamilyWealth > 0 ? (investTotal / totalFamilyWealth * 100) : 0;
+        const insuranceRatio = totalFamilyWealth > 0 ? (insuranceTotal / totalFamilyWealth * 100) : 0;
+
+        document.getElementById('quad-daily-ratio').innerText = `${activeRatio.toFixed(1)}%`;
+        document.getElementById('quad-safe-ratio').innerText = `${savingRatio.toFixed(1)}%`;
+        document.getElementById('quad-invest-ratio').innerText = `${investRatio.toFixed(1)}%`;
+        document.getElementById('quad-insurance-ratio').innerText = `${insuranceRatio.toFixed(1)}%`;
+
+        let adviceHtml = '';
+        if (totalFamilyWealth < 10000) {
+            adviceHtml = '🌱 <strong>资本起步期：</strong>当前首要目标：努力提升主业收入，通过【定存】强制积攒第一笔3-5万安全垫。';
+        } else {
+            let points = [];
+            if (activeRatio > 30) points.push('<i class="fa-solid fa-wallet text-blue-500 w-4"></i> <strong>活期冗余：</strong>保留3-6个月开销即可，多余资金建议转入稳健理财。');
+            else if (activeRatio < 5) points.push('<i class="fa-solid fa-wallet text-blue-500 w-4"></i> <strong>流动性危机：</strong>活期极少，家庭抗突发风险能力极差。');
+
+            if (insuranceRatio < 5) points.push('<i class="fa-solid fa-shield-heart text-purple-500 w-4"></i> <strong>防线空虚：</strong>保障类资产不足。建议配置“医疗险+重疾险”。');
+            if (investRatio < 10 && totalFamilyWealth > 100000) points.push('<i class="fa-solid fa-chart-line text-orange-500 w-4"></i> <strong>复利缺失：</strong>生钱资产占比偏低。建议定投宽基指数。');
+            else if (investRatio > 55) points.push('<i class="fa-solid fa-chart-line text-orange-500 w-4"></i> <strong>高波风险：</strong>投资占比过高，建议止盈部分转入固收。');
+            if (savingRatio < 20) points.push('<i class="fa-solid fa-building-columns text-green-500 w-4"></i> <strong>压舱石不足：</strong>保本类资产匮乏。增加国债、大额存单。');
+
+            if (points.length === 0) adviceHtml = '🌟 <strong>教科书级配置：</strong>结构极为优秀，抗风险与进攻性兼具！';
+            else adviceHtml = points.join('<hr class="border-gray-100 my-2.5">');
+        }
+        document.getElementById('ai-advisor-box').innerHTML = adviceHtml;
     }
 
     function renderAccounts(balances) {
-        accountContainer.innerHTML = '';
-        accountTypes.forEach(acc => {
-            const bal = balances[acc.id] || 0;
+        const container = document.getElementById('account-container');
+        if(!container) return;
+        container.innerHTML = '';
+        accountTypes.filter(a => !a.hideInSelect).forEach(acc => {
+            const bal = balances[acc.id] || 0; const isDebt = bal < 0; 
             const card = document.createElement('div');
-            card.className = `account-card ${acc.colorClass} rounded-2xl p-4 text-white shadow-md flex flex-col justify-between h-28`;
-            card.innerHTML = `<div class="flex items-center gap-2 opacity-90"><i class="fa-brands ${acc.icon} ${['fa-building-columns', 'fa-leaf', 'fa-heart', 'fa-arrow-trend-up', 'fa-seedling'].includes(acc.icon) ? 'fa-solid' : ''}"></i><span class="text-xs font-medium tracking-wide">${acc.name}</span></div><div><p class="text-xs opacity-70 mb-0.5">余额</p><p class="text-lg font-bold">¥${formatMoney(bal)}</p></div>`;
-            accountContainer.appendChild(card);
+            card.className = `account-card ${acc.colorClass} rounded-[24px] p-4 text-white shadow-lg flex flex-col justify-between h-28 border ${isDebt ? 'border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'border-white/20'}`;
+            let badgeHtml = ''; if(acc.groupName) badgeHtml = `<span class="acc-badge">${acc.groupName}</span>`;
+            if(isDebt) badgeHtml += `<span class="absolute top-10 right-2 text-[10px] text-red-200 font-bold bg-red-900/40 px-1.5 rounded"><i class="fa-solid fa-triangle-exclamation"></i> 欠款</span>`;
+
+            card.innerHTML = `
+                ${badgeHtml}
+                <div class="flex items-center gap-2 opacity-95"><i class="fa-brands ${acc.icon} ${['fa-building-columns', 'fa-leaf', 'fa-heart', 'fa-arrow-trend-up', 'fa-seedling', 'fa-credit-card', 'fa-shield-heart', 'fa-file-shield'].includes(acc.icon) ? 'fa-solid' : ''} text-[16px]"></i><span class="text-[13px] font-extrabold tracking-wide">${acc.name}</span></div>
+                <div><p class="text-[10px] opacity-70 mb-0.5 uppercase tracking-wider font-bold">BALANCE</p><p class="text-[20px] leading-none font-black tracking-tighter ${isDebt && !isPrivacyMode ? 'text-red-100' : ''}">${displayMoney(bal)}</p></div>`;
+            container.appendChild(card);
         });
     }
 
-    function renderTransactions(monthTxs) {
-        list.innerHTML = '';
-        if(monthTxs.length === 0) {
-            list.innerHTML = `<li class="text-gray-400 text-center py-10 text-sm"><i class="fa-solid fa-ghost mb-3 text-3xl opacity-30 block"></i>${monthFilter.value} 月还没有账单记录哦</li>`;
-            return;
-        }
+    function renderTransactions(txs, targetElementId, limit = 0) {
+        const ul = document.getElementById(targetElementId); if(!ul) return; ul.innerHTML = '';
+        if(txs.length === 0) { ul.innerHTML = `<li class="text-gray-400 text-center py-8 text-sm font-medium"><i class="fa-solid fa-ghost mb-2 text-2xl opacity-30 block"></i>暂无记录</li>`; return; }
 
-        const sorted = [...monthTxs].sort((a, b) => {
-            const dateA = new Date(a.dateObj).getTime();
-            const dateB = new Date(b.dateObj).getTime();
-            if (dateA !== dateB) return dateB - dateA;
-            return b.timestamp - a.timestamp;
-        });
+        const sorted = txs.sort((a, b) => { const dateA = new Date(a.dateObj).getTime(); const dateB = new Date(b.dateObj).getTime(); if (dateA !== dateB) return dateB - dateA; return b.timestamp - a.timestamp; });
+        const displayList = limit > 0 ? sorted.slice(0, limit) : sorted;
 
-        sorted.forEach(t => {
-            const isExpense = t.amount < 0;
-            const colorClass = isExpense ? 'text-gray-900' : 'text-green-600';
-            const sign = isExpense ? '' : '+';
-            const accName = accountTypes.find(a => a.id === t.accountId)?.name || '未知';
+        displayList.forEach(t => {
+            const item = document.createElement('li'); const accName = accountTypes.find(a => a.id === t.accountId)?.name || '未知';
 
-            let iconStr = 'fa-tag';
-            if (t.category.includes('餐饮')) iconStr = 'fa-utensils';
-            if (t.category.includes('超市')) iconStr = 'fa-basket-shopping';
-            if (t.category.includes('交通')) iconStr = 'fa-car';
-            if (t.category.includes('住房')) iconStr = 'fa-house';
-            if (t.category.includes('医疗')) iconStr = 'fa-notes-medical';
-            if (t.category.includes('社交') || t.category.includes('娱乐')) iconStr = 'fa-gamepad';
-            if (t.category.includes('旅行')) iconStr = 'fa-plane';
-            if (t.category.includes('工资')) iconStr = 'fa-coins';
-            if (t.category.includes('投资')) iconStr = 'fa-chart-line';
-            if (t.category.includes('退款') || t.category.includes('转移')) iconStr = 'fa-arrow-rotate-left';
-
-            const item = document.createElement('li');
-            item.className = 'py-4 flex items-center justify-between group border-b border-gray-50/50 last:border-0';
-            item.innerHTML = `
-                <div class="flex items-center gap-4 w-2/3">
-                    <div class="w-10 h-10 bg-gray-100 rounded-full flex flex-shrink-0 items-center justify-center text-gray-500"><i class="fa-solid ${iconStr}"></i></div>
-                    <div class="overflow-hidden">
-                        <p class="font-semibold text-gray-800 text-sm truncate">${t.text}</p>
-                        <p class="text-xs text-gray-400 mt-0.5 truncate">${t.category} · ${accName}</p>
+            if (t.type === 'adjust') {
+                item.className = 'py-3 flex items-center justify-center group';
+                item.innerHTML = `
+                    <div class="flex items-center justify-between w-full px-3.5 py-2.5 bg-gray-50/90 rounded-xl border border-gray-200/80 shadow-sm">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-scale-balanced text-blue-400 text-[11px]"></i><span class="text-[11px] font-bold text-gray-500">${t.dateObj} · ${accName}盘点平账</span></div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-black ${t.amount > 0 ? 'text-green-600' : 'text-gray-700'}">${t.amount > 0 ? '+' : ''}${isPrivacyMode ? '****' : formatMoney(t.amount)}</span>
+                            <div class="flex gap-2">
+                                <button onclick="openEditModal('${t.id}')" class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-blue-500 flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-pen text-[11px]"></i></button>
+                                <button onclick="removeTransaction('${t.id}')" class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="flex items-center gap-3 w-1/3 justify-end">
-                    <div class="text-right">
-                        <span class="font-bold block text-sm ${colorClass}">${sign}${formatMoney(t.amount)}</span>
-                        <span class="text-[10px] text-gray-400 font-mono">${t.dateObj}</span>
+                `;
+            } else {
+                const isExpense = t.amount < 0 && t.type !== 'transfer'; let colorClass = isExpense ? 'text-gray-900' : 'text-green-600'; let sign = isExpense ? '' : '+';
+                let categoryDisplay = t.category; let iconStr = 'fa-tag'; let iconBg = 'bg-gray-100'; let iconColor = 'text-gray-500';
+
+                let aaBadge = t.isShared && isExpense ? `<span class="bg-indigo-100 text-indigo-700 text-[8px] px-1.5 py-0.5 rounded ml-1 font-black">家庭AA</span>` : '';
+                let tagsHtml = '';
+                if(t.tags && t.tags.length > 0) {
+                    tagsHtml = `<div class="flex gap-1 mt-1.5 flex-wrap">` + t.tags.map(tag => {
+                        let tagClass = 'info'; 
+                        if(tag === '冲动消费') tagClass = 'alert';
+                        if(tag === '🤖自动生成') tagClass = 'auto';
+                        return `<span class="tx-tag ${tagClass}">${tag}</span>`;
+                    }).join('') + `</div>`;
+                }
+
+                if(t.type === 'transfer') {
+                    const fromAccName = accountTypes.find(a => a.id === t.fromAccountId)?.name || '未知';
+                    categoryDisplay = `${fromAccName} <i class="fa-solid fa-arrow-right text-[8px] mx-0.5"></i> ${accName}`;
+                    iconStr = 'fa-right-left'; colorClass = 'text-gray-800'; sign = ''; iconBg = 'bg-purple-50'; iconColor = 'text-purple-500';
+                } else if(t.type === 'pnl') {
+                    iconStr = t.amount < 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up'; colorClass = t.amount < 0 ? 'text-green-600' : 'text-red-500'; sign = t.amount < 0 ? '' : '+'; iconBg = t.amount < 0 ? 'bg-green-50' : 'bg-red-50'; iconColor = t.amount < 0 ? 'text-green-600' : 'text-red-500';
+                } else {
+                    if (t.category.includes('餐饮')) iconStr = 'fa-utensils';
+                    if (t.category.includes('超市')) iconStr = 'fa-basket-shopping';
+                    if (t.category.includes('交通')) iconStr = 'fa-car';
+                    if (t.category.includes('住房') || t.category.includes('房租')) { iconStr = 'fa-house'; iconBg='bg-orange-50'; iconColor='text-orange-500'; }
+                    if (t.category.includes('房贷')) { iconStr = 'fa-building-columns'; iconBg='bg-indigo-50'; iconColor='text-indigo-500'; }
+                    if (t.category.includes('医疗')) { iconStr = 'fa-notes-medical'; iconBg='bg-pink-50'; iconColor='text-pink-500'; }
+                    if (t.category.includes('社交') || t.category.includes('娱乐')) iconStr = 'fa-gamepad';
+                    if (t.category.includes('旅行')) { iconStr = 'fa-plane'; iconBg='bg-sky-50'; iconColor='text-sky-500'; }
+                    if (t.category.includes('工资') || t.category.includes('报销')) { iconStr = 'fa-sack-dollar'; iconBg='bg-green-50'; iconColor='text-green-500'; }
+                    if (t.category.includes('退款')) iconStr = 'fa-arrow-rotate-left';
+                }
+
+                item.className = 'py-3.5 flex items-center justify-between group border-b border-gray-100/80 last:border-0';
+                item.innerHTML = `
+                    <div class="flex items-center gap-3.5 w-[65%]">
+                        <div class="w-10 h-10 ${iconBg} rounded-full flex flex-shrink-0 items-center justify-center ${iconColor} shadow-sm"><i class="fa-solid ${iconStr} text-[14px]"></i></div>
+                        <div class="overflow-hidden">
+                            <p class="font-extrabold text-gray-900 text-[14px] truncate">${t.text} ${aaBadge}</p>
+                            <p class="text-[10px] font-bold text-gray-400 mt-0.5 truncate">${categoryDisplay}</p>
+                            ${tagsHtml}
+                        </div>
                     </div>
-                    <button class="text-gray-200 hover:text-red-500 transition-colors p-2 active:bg-red-50 rounded-full flex-shrink-0" onclick="removeTransaction('${t.id}')"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                </div>
-            `;
-            list.appendChild(item);
+                    <div class="flex items-center justify-end gap-2 w-[35%]">
+                        <div class="text-right">
+                            <span class="font-black block text-[16px] tracking-tight ${colorClass}">${isPrivacyMode ? '****' : sign + formatMoney(Math.abs(t.amount))}</span>
+                            <span class="text-[9px] text-gray-400 font-mono font-bold">${t.dateObj}</span>
+                        </div>
+                        <div class="flex flex-col gap-1.5 ml-2">
+                            <button class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-blue-500 flex items-center justify-center active:scale-90 transition-transform" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pen text-[11px]"></i></button>
+                            <button class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center active:scale-90 transition-transform" onclick="removeTransaction('${t.id}')"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
+                        </div>
+                    </div>
+                `;
+            }
+            ul.appendChild(item);
         });
     }
 
@@ -574,200 +1209,293 @@
         const expenseTxs = monthTxs.filter(t => t.amount < 0 && t.type === 'expense');
         const categoryTotals = {};
         expenseTxs.forEach(t => categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Math.abs(t.amount));
-
-        const labels = Object.keys(categoryTotals);
-        const data = Object.values(categoryTotals);
-        
-        // 更高级的莫兰迪配色体系
+        const labels = Object.keys(categoryTotals); const data = Object.values(categoryTotals);
         const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b', '#84cc16', '#f43f5e'];
 
         if (expenseChart) expenseChart.destroy();
         if (labels.length === 0) {
-            document.getElementById('expenseChart').parentElement.innerHTML = `<p class="text-gray-400 text-sm">该月暂无消费数据</p><canvas id="expenseChart" class="hidden"></canvas>`;
-            return;
+            document.getElementById('expenseChart').parentElement.innerHTML = `<p class="text-gray-400 text-sm font-bold">本月暂无消费支出</p><canvas id="expenseChart" class="hidden"></canvas>`; return;
         } else {
             const container = document.getElementById('expenseChart').parentElement;
             if(container.querySelector('p')) container.innerHTML = '<canvas id="expenseChart"></canvas>';
         }
 
         expenseChart = new Chart(document.getElementById('expenseChart').getContext('2d'), {
-            type: 'doughnut',
-            data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 2, borderColor: '#ffffff' }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: {size: 11} } } }, cutout: '70%' }
+            type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0, hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: {size: 11, family: "system-ui", weight: "bold"} } } }, cutout: '75%' }
         });
     }
 
-    // --- 撤回系统 ---
     function showUndoToast(tx) {
-        const toast = document.getElementById('undo-toast');
-        document.getElementById('undo-text').innerText = `已记: ${tx.text} (¥${formatMoney(Math.abs(tx.amount))})`;
-        toast.classList.remove('toast-hidden');
-        toast.classList.add('toast-visible');
-        
-        if(undoTimeout) clearTimeout(undoTimeout);
-        undoTimeout = setTimeout(() => {
-            toast.classList.remove('toast-visible');
-            toast.classList.add('toast-hidden');
-            lastAddedTxId = null; 
-        }, 5000);
+        const toast = document.getElementById('undo-toast'); document.getElementById('undo-text').innerText = `已记: ${tx.text} (${isPrivacyMode ? '****' : formatMoney(Math.abs(tx.amount))})`;
+        toast.classList.remove('toast-hidden'); toast.classList.add('toast-visible');
+        if(undoTimeout) clearTimeout(undoTimeout); undoTimeout = setTimeout(() => { toast.classList.remove('toast-visible'); toast.classList.add('toast-hidden'); lastAddedTxId = null; }, 5000);
     }
 
     window.undoLastTransaction = function() {
-        if(!lastAddedTxId) return;
-        transactions = transactions.filter(t => t.id !== lastAddedTxId);
-        lastAddedTxId = null; 
-        const toast = document.getElementById('undo-toast');
-        toast.classList.remove('toast-visible');
-        toast.classList.add('toast-hidden');
-        if (navigator.vibrate) navigator.vibrate(50);
-        render();
+        if(!lastAddedTxId) return; transactions = transactions.filter(t => t.id !== lastAddedTxId); lastAddedTxId = null; 
+        document.getElementById('undo-toast').classList.replace('toast-visible', 'toast-hidden'); showGlobalToast('已成功撤回', 'info'); render();
     };
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (text.value.trim() === '' || amount.value.trim() === '') return;
+    document.getElementById('form').addEventListener('submit', (e) => {
+        e.preventDefault(); 
+        
+        const textEl = document.getElementById('text');
+        const amountEl = document.getElementById('amount');
+        const categorySelectEl = document.getElementById('category');
+        const accountSelectEl = document.getElementById('account-select');
+        const fromAccountSelectEl = document.getElementById('from-account-select');
+        const datePickerEl = document.getElementById('tx-date');
+        
+        if (textEl.value.trim() === '' || amountEl.value.trim() === '') return;
 
-        let amountVal = Math.abs(+amount.value);
-        const finalAmount = currentType === 'expense' ? -amountVal : amountVal;
-        const selectedDate = datePicker.value;
+        let amountVal = Math.abs(+amountEl.value); let finalAmount; let isShared = false;
+
+        if (currentType === 'expense') { finalAmount = -amountVal; isShared = document.getElementById('is-shared').checked; } 
+        else if (currentType === 'pnl') { finalAmount = categorySelectEl.value.includes('亏损') ? -amountVal : amountVal; } 
+        else { finalAmount = amountVal; }
+        
+        const selectedDate = datePickerEl.value;
 
         const newTx = {
             id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
-            text: text.value,
-            amount: finalAmount,
-            category: category.value,
-            type: currentType,
-            accountId: accountSelect.value,
-            dateObj: selectedDate,
-            timestamp: Date.now()
+            text: textEl.value, amount: finalAmount, category: currentType === 'transfer' ? '内部转账' : categorySelectEl.value,
+            type: currentType, accountId: accountSelectEl.value, fromAccountId: currentType === 'transfer' ? fromAccountSelectEl.value : null,
+            dateObj: selectedDate, timestamp: Date.now(), isShared: isShared, tags: Array.from(currentActiveTags)
         };
 
-        transactions.push(newTx);
-        lastAddedTxId = newTx.id; 
-        
-        const txMonth = selectedDate.substring(0, 7);
-        monthFilter.value = txMonth;
+        if (currentType === 'transfer' && newTx.accountId === newTx.fromAccountId) { showGlobalToast('转出和转入账户不能相同', 'error'); return; }
 
-        text.value = ''; amount.value = '';
-        if (navigator.vibrate) navigator.vibrate(50);
-        window.scrollTo({top: 0, behavior: 'smooth'});
-        render();
-        showUndoToast(newTx);
+        transactions.unshift(newTx); lastAddedTxId = newTx.id; 
+        document.getElementById('month-filter').value = selectedDate.substring(0, 7);
+        textEl.value = ''; amountEl.value = ''; document.getElementById('is-shared').checked = false;
+        currentActiveTags.clear(); document.querySelectorAll('.tag-pill').forEach(p => p.classList.remove('active'));
+
+        window.scrollTo({top: 0, behavior: 'smooth'}); render(); showUndoToast(newTx);
     });
 
     window.removeTransaction = function(id) {
         if (!confirm("确定要删除这条记录吗？")) return;
-        transactions = transactions.filter(t => t.id !== id);
-        render();
+        transactions = transactions.filter(t => t.id !== id); showGlobalToast('账单已删除', 'info'); render();
     };
 
-    window.clearAllData = function() {
-        if (!confirm("⚠️ 危险警告！这将会清空你所有的账单、余额和设置信息！\n清空后无法恢复，确定要继续吗？")) return;
-        transactions = [];
-        initialBalances = {};
-        accountTypes.forEach(acc => initialBalances[acc.id] = 0);
-        monthlyBudget = 0;
-        render();
-        closeSettingsModal();
-        alert("所有数据已清空。");
+    const editModal = document.getElementById('edit-modal');
+    window.openEditModal = (id) => {
+        const tx = transactions.find(t => t.id === id); if(!tx) return; editingTxId = id;
+        document.getElementById('edit-date').value = tx.dateObj; document.getElementById('edit-amount').value = Math.abs(tx.amount); document.getElementById('edit-text').value = tx.text;
+        
+        const aaWrapper = document.getElementById('edit-aa-wrapper'); const aaCheckbox = document.getElementById('edit-is-shared');
+        const accOptions = accountTypes.filter(a => !a.hideInSelect).map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
+        document.getElementById('edit-account').innerHTML = accOptions; document.getElementById('edit-from-account').innerHTML = accOptions;
+
+        if (tx.type === 'adjust') {
+            document.getElementById('edit-normal-fields').classList.add('hidden'); aaWrapper.classList.add('hidden');
+        } else if (tx.type === 'transfer') {
+            document.getElementById('edit-normal-fields').classList.remove('hidden'); document.getElementById('edit-category-wrapper').classList.add('hidden');
+            document.getElementById('edit-from-account-wrapper').classList.remove('hidden'); document.getElementById('edit-account-label').innerText = '转入账户';
+            document.getElementById('edit-account').value = tx.accountId; document.getElementById('edit-from-account').value = tx.fromAccountId; aaWrapper.classList.add('hidden');
+        } else {
+            document.getElementById('edit-normal-fields').classList.remove('hidden'); document.getElementById('edit-category-wrapper').classList.remove('hidden');
+            document.getElementById('edit-from-account-wrapper').classList.add('hidden'); document.getElementById('edit-account-label').innerText = '账户';
+            document.getElementById('edit-account').value = tx.accountId;
+            const editCatSelect = document.getElementById('edit-category'); updateCategoryOptions(tx.type, editCatSelect); editCatSelect.value = tx.category;
+            if(tx.type === 'expense') { aaWrapper.classList.remove('hidden'); aaCheckbox.checked = !!tx.isShared; } else { aaWrapper.classList.add('hidden'); }
+        }
+        editModal.style.display = 'flex';
+    };
+    
+    window.closeEditModal = () => { editModal.style.display = 'none'; editingTxId = null; };
+
+    window.saveEditTransaction = () => {
+        const tx = transactions.find(t => t.id === editingTxId); if(!tx) return;
+        const amountVal = Math.abs(+document.getElementById('edit-amount').value); if(amountVal === 0 || isNaN(amountVal)) { showGlobalToast('请输入有效金额', 'error'); return; }
+
+        tx.dateObj = document.getElementById('edit-date').value; tx.text = document.getElementById('edit-text').value;
+
+        if (tx.type === 'adjust') { tx.amount = tx.amount < 0 ? -amountVal : amountVal; } 
+        else if (tx.type === 'transfer') {
+            tx.amount = amountVal; tx.accountId = document.getElementById('edit-account').value; tx.fromAccountId = document.getElementById('edit-from-account').value;
+            if(tx.accountId === tx.fromAccountId) { showGlobalToast('转出和转入账户不能相同', 'error'); return; }
+        } else {
+            tx.category = document.getElementById('edit-category').value;
+            if(tx.type === 'expense') { tx.amount = -amountVal; tx.isShared = document.getElementById('edit-is-shared').checked; }
+            else if (tx.type === 'pnl') tx.amount = tx.category.includes('亏损') ? -amountVal : amountVal;
+            else tx.amount = amountVal;
+            tx.accountId = document.getElementById('edit-account').value;
+        }
+        showGlobalToast('记录修改成功'); render(); closeEditModal();
     };
 
-    // --- 设置模态框 ---
     const settingsModal = document.getElementById('settings-modal');
     window.openSettingsModal = () => {
         document.getElementById('monthly-budget-input').value = monthlyBudget > 0 ? monthlyBudget : '';
-        const initBalContainer = document.getElementById('initial-balances-container');
-        initBalContainer.innerHTML = '';
-        accountTypes.forEach(acc => {
-            const div = document.createElement('div');
-            div.className = 'setting-row';
-            div.innerHTML = `<div class="flex items-center gap-2"><span class="text-sm font-medium text-gray-700">${acc.name}</span></div><div class="relative w-32"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">¥</span><input type="number" id="init-bal-${acc.id}" value="${initialBalances[acc.id] || 0}" step="0.01" class="w-full pl-7 pr-2 py-2 rounded-lg border border-gray-200 focus:border-blue-500 text-sm font-mono text-right bg-gray-50"></div>`;
-            initBalContainer.appendChild(div);
+        const today = new Date(); document.getElementById('calib-date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        const calibContainer = document.getElementById('calibration-container'); calibContainer.innerHTML = ''; const currentBals = getCalculatedBalances().balances;
+
+        accountTypes.filter(a => !a.hideInSelect).forEach(acc => {
+            const currentBal = currentBals[acc.id] || 0; const div = document.createElement('div'); div.className = 'setting-row';
+            div.innerHTML = `<div class="flex items-center gap-2"><span class="text-[13px] font-bold text-gray-700">${acc.name}</span></div><div class="relative w-36"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">¥</span><input type="number" id="calib-bal-${acc.id}" placeholder="当前: ${currentBal.toFixed(1)}" step="0.01" class="w-full pl-7 pr-2 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 text-[14px] font-black font-mono text-right bg-gray-50"></div>`;
+            calibContainer.appendChild(div);
         });
         settingsModal.style.display = 'flex';
     };
     window.closeSettingsModal = () => settingsModal.style.display = 'none';
-    window.saveSettings = () => {
+    
+    window.saveSettingsAndCalibrate = () => {
         monthlyBudget = parseFloat(document.getElementById('monthly-budget-input').value) || 0;
-        accountTypes.forEach(acc => initialBalances[acc.id] = parseFloat(document.getElementById(`init-bal-${acc.id}`).value) || 0);
+        const calibDateValue = document.getElementById('calib-date').value; if (!calibDateValue) { showGlobalToast('请选择盘点生效时间', 'error'); return; }
+
+        const currentBals = getCalculatedBalances().balances; let adjustCount = 0;
+
+        accountTypes.filter(a => !a.hideInSelect).forEach(acc => {
+            const inputEl = document.getElementById(`calib-bal-${acc.id}`);
+            if (inputEl.value !== '') {
+                const targetBal = parseFloat(inputEl.value); const diff = targetBal - currentBals[acc.id];
+                if (Math.abs(diff) > 0.001) {
+                    transactions.unshift({ id: Date.now().toString() + Math.random().toString(36).substring(2, 9), text: 'CFO资产盘点平账', amount: diff, category: '系统平账', type: 'adjust', accountId: acc.id, dateObj: calibDateValue, timestamp: Date.now() });
+                    adjustCount++;
+                }
+            }
+        });
         render(); closeSettingsModal();
+        if (adjustCount > 0) showGlobalToast(`盘点完成！生成 ${adjustCount} 笔系统平账`); else showGlobalToast(`设置已保存`);
     };
 
-    // --- 数据传输模态框 ---
+    window.clearAllData = function() {
+        if (!confirm("⚠️ 危险警告！这将会彻底清空手机上的所有数据，且无法恢复！确定要继续吗？")) return;
+        transactions = []; initialBalances = {}; accountTypes.forEach(acc => initialBalances[acc.id] = 0); monthlyBudget = 0;
+        recurringTasks = []; recurringLogs = [];
+        targetFunds = [
+            { id: 'f1', name: '旅行游玩基金', icon: '✈️', target: 10000, current: 0 },
+            { id: 'f2', name: '数码换新基金', icon: '💻', target: 8000, current: 0 },
+            { id: 'f3', name: '家庭防御备用金', icon: '🛡️', target: 50000, current: 0 }
+        ];
+        localStorage.setItem(KEY_FUNDS, JSON.stringify(targetFunds));
+        localStorage.setItem(KEY_REC, JSON.stringify(recurringTasks));
+        localStorage.setItem(KEY_REC_LOG, JSON.stringify(recurringLogs));
+        render(); closeSettingsModal(); showGlobalToast('数据已全部重置', 'info');
+    };
+
     const transferModal = document.getElementById('transfer-modal');
     window.openTransferModal = () => transferModal.style.display = 'flex';
     window.closeTransferModal = () => transferModal.style.display = 'none';
+    
     window.generateDataCode = function() {
-        const fullData = { tx: transactions, bal: initialBalances, bud: monthlyBudget };
-        const finalCode = "LEDGER_FINAL:" + btoa(unescape(encodeURIComponent(JSON.stringify(fullData))));
+        const fullData = { tx: transactions, bal: initialBalances, bud: monthlyBudget, fnd: targetFunds, rec: recurringTasks, log: recurringLogs }; const finalCode = "LEDGER_FINAL:" + btoa(unescape(encodeURIComponent(JSON.stringify(fullData))));
         try {
-            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(finalCode).then(() => alert("✅ 数据码已复制！"));
-            else throw new Error("Fallback");
+            if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(finalCode).then(() => showGlobalToast("代码已复制，请妥善保存")); } else throw new Error("Fallback");
         } catch(e) {
-            let textArea = document.createElement("textarea");
-            textArea.value = finalCode; document.body.appendChild(textArea);
-            textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea);
-            alert("✅ 数据码已复制！请妥善保存。");
+            let textArea = document.createElement("textarea"); textArea.value = finalCode; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea); showGlobalToast("代码已复制，请粘贴到备忘录");
         }
     }
+    
     window.importDataCode = function() {
         const codeInput = document.getElementById('import-code').value.trim();
-        if (!codeInput.startsWith("LEDGER_FINAL:") && !codeInput.startsWith("LEDGER_V3:")) return alert("数据码格式错误！");
+        if (!codeInput.startsWith("LEDGER_FINAL:") && !codeInput.startsWith("LEDGER_V3:")) { showGlobalToast("数据代码格式不正确", "error"); return; }
         try {
             const parsedData = JSON.parse(decodeURIComponent(escape(atob(codeInput.split(":")[1]))));
-            if (!confirm("⚠️ 将覆盖所有现有数据，确定导入吗？")) return;
-            transactions = parsedData.tx || [];
-            initialBalances = parsedData.bal || {};
-            monthlyBudget = parsedData.bud || 0;
-            render(); closeTransferModal(); alert("🎉 导入成功！您的资产已恢复。");
-        } catch (e) { alert("解析失败，请检查复制的内容是否完整。"); }
+            if (!confirm("⚠️ 确认覆盖当前设备的所有数据吗？")) return;
+            transactions = parsedData.tx || []; initialBalances = parsedData.bal || {}; monthlyBudget = parsedData.bud || 0;
+            if(parsedData.fnd) targetFunds = parsedData.fnd;
+            if(parsedData.rec) recurringTasks = parsedData.rec;
+            if(parsedData.log) recurringLogs = parsedData.log;
+            
+            localStorage.setItem(KEY_FUNDS, JSON.stringify(targetFunds));
+            localStorage.setItem(KEY_REC, JSON.stringify(recurringTasks));
+            localStorage.setItem(KEY_REC_LOG, JSON.stringify(recurringLogs));
+            
+            render(); closeTransferModal(); showGlobalToast("财务数据恢复成功！");
+        } catch (e) { showGlobalToast("解析失败，请检查代码完整性", "error"); }
     }
 
-    // --- 原生分享导出 ---
     window.exportReport = async function(type) {
-        if(transactions.length === 0) return alert('暂无数据可导出');
+        if(transactions.length === 0) { showGlobalToast('暂无数据可导出', 'error'); return; }
         const now = new Date(), currentYear = now.getFullYear(), currentMonth = now.getMonth();
-        let filtered = transactions, filename = '资产报表_全部数据.csv';
+        let filtered = transactions, filename = 'CFO资产报表_全部数据.csv';
 
         if(type === 'month') {
-            filtered = transactions.filter(t => {
-                const txDate = new Date(t.dateObj || t.timestamp);
-                return txDate.getFullYear() === currentYear && txDate.getMonth() === currentMonth;
-            });
-            filename = `资产报表_本月_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.csv`;
+            filtered = transactions.filter(t => { const txDate = new Date(t.dateObj || t.timestamp); return txDate.getFullYear() === currentYear && txDate.getMonth() === currentMonth; });
+            filename = `CFO资产报表_本月_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.csv`;
         } else if(type === 'year') {
             filtered = transactions.filter(t => new Date(t.dateObj || t.timestamp).getFullYear() === currentYear);
-            filename = `资产报表_年度_${currentYear}.csv`;
+            filename = `CFO资产报表_年度_${currentYear}.csv`;
         }
+        if(filtered.length === 0) { showGlobalToast('该时间段内无数据', 'info'); return; }
 
-        if(filtered.length === 0) return alert('该时间段内暂无数据');
+        const headers = ['记账日期', '收支性质', '资金分类/流向', '对应账户', '发生金额(元)', '详细备注', '系统录入时间'];
+        const rows = filtered.map(t => {
+            let typeStr = '日常支出'; let catStr = t.category; let accStr = accountTypes.find(a => a.id === t.accountId)?.name || '未知';
+            if (t.type === 'income') typeStr = '各项收入'; 
+            else if (t.type === 'transfer') {
+                typeStr = '内部转账/还款'; 
+                const fromAccName = accountTypes.find(a => a.id === t.fromAccountId)?.name || '未知';
+                catStr = `${fromAccName} -> ${accStr}`; accStr = '-';
+            } else if (t.type === 'pnl') { typeStr = '投资盈亏'; }
+            else if (t.type === 'adjust') { typeStr = 'CFO系统平账'; }
 
-        const headers = ['记账日期', '收支类型', '分类', '账户', '金额(元)', '备注说明', '系统录入时间'];
-        const rows = filtered.map(t => [
-            t.dateObj || t.date, 
-            t.type === 'expense' ? '支出' : (t.type === 'income' ? '收入' : '退款/转移'),
-            t.category,
-            accountTypes.find(a => a.id === t.accountId)?.name || '未知',
-            Math.abs(t.amount).toFixed(2),
-            t.text.replace(/,/g, '，'),
-            new Date(t.timestamp).toLocaleString('zh-CN')
-        ]);
+            return [
+                t.dateObj || t.date, typeStr, catStr, accStr,
+                Math.abs(t.amount).toFixed(2), t.text.replace(/,/g, '，'), new Date(t.timestamp).toLocaleString('zh-CN')
+            ];
+        });
 
         let csvContent = "\uFEFF" + headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
         const file = new File([csvContent], filename, { type: 'text/csv;charset=utf-8;' });
-
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({ files: [file], title: filename, text: '我的理财对账单📊' });
-                return; 
-            } catch (err) { if (err.name === 'AbortError') return; }
+            try { await navigator.share({ files: [file], title: filename, text: '家庭CFO财务对账单📊' }); return; } catch (err) { if (err.name === 'AbortError') return; }
         }
-        
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(file);
-        link.download = filename;
-        link.click();
+        const link = document.createElement("a"); link.href = URL.createObjectURL(file); link.download = filename; link.click();
     };
+
+    // V13 自动记账规则管理
+    const recurringModal = document.getElementById('recurring-modal');
+    
+    window.openRecurringModal = () => {
+        document.getElementById('settings-modal').style.display = 'none';
+        const accOptions = accountTypes.filter(a => !a.hideInSelect).map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
+        document.getElementById('rec-account').innerHTML = accOptions;
+        updateCategoryOptions('expense', document.getElementById('rec-category'));
+        document.getElementById('rec-type').addEventListener('change', (e) => { updateCategoryOptions(e.target.value, document.getElementById('rec-category')); });
+        renderRecurringList(); recurringModal.style.display = 'flex';
+    }
+    
+    window.closeRecurringModal = () => { recurringModal.style.display = 'none'; document.getElementById('settings-modal').style.display = 'flex'; }
+    
+    function renderRecurringList() {
+        const ul = document.getElementById('recurring-list'); ul.innerHTML = '';
+        if(recurringTasks.length === 0) { ul.innerHTML = `<li class="text-[11px] text-gray-400 py-2">暂无自动记账规则。</li>`; return; }
+        recurringTasks.forEach(task => {
+            const accName = accountTypes.find(a => a.id === task.accountId)?.name || '未知';
+            const colorClass = task.type === 'expense' ? 'text-red-600' : 'text-green-600';
+            const sign = task.type === 'expense' ? '-' : '+';
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm';
+            li.innerHTML = `
+                <div><p class="text-[13px] font-bold text-gray-800">${task.text}</p><p class="text-[10px] text-gray-400 mt-0.5">${accName} · ${task.category}</p></div>
+                <div class="flex items-center gap-3"><span class="text-[14px] font-black ${colorClass}">${sign}¥${formatMoney(task.amount)}</span><button onclick="deleteRecurringTask('${task.id}')" class="w-7 h-7 bg-red-50 text-red-500 rounded-full flex items-center justify-center active:scale-90"><i class="fa-solid fa-trash-can text-[11px]"></i></button></div>
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    window.saveRecurringTask = () => {
+        const type = document.getElementById('rec-type').value; const amount = Math.abs(parseFloat(document.getElementById('rec-amount').value));
+        const accountId = document.getElementById('rec-account').value; const category = document.getElementById('rec-category').value; const text = document.getElementById('rec-text').value;
+
+        if(!amount || !text) { showGlobalToast('请填写完整金额和说明', 'error'); return; }
+
+        recurringTasks.push({ id: 'r' + Date.now(), type, amount, accountId, category, text });
+        localStorage.setItem(KEY_REC, JSON.stringify(recurringTasks));
+        
+        document.getElementById('rec-amount').value = ''; document.getElementById('rec-text').value = '';
+        renderRecurringList(); showGlobalToast('自动化任务添加成功！下月起生效');
+    }
+
+    window.deleteRecurringTask = (id) => {
+        if(!confirm('确定删除此自动化规则？')) return;
+        recurringTasks = recurringTasks.filter(t => t.id !== id); localStorage.setItem(KEY_REC, JSON.stringify(recurringTasks)); renderRecurringList();
+    }
 
     initUI();
 </script>

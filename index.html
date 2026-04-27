@@ -31,6 +31,7 @@
             background: var(--card-bg); backdrop-filter: saturate(200%) blur(24px); -webkit-backdrop-filter: saturate(200%) blur(24px); 
             border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); border-radius: 24px; 
         }
+        
         .account-card { min-width: 145px; scroll-snap-align: start; transition: transform 0.2s; position: relative; cursor: pointer;}
         .account-card:active { transform: scale(0.96); }
         
@@ -41,7 +42,6 @@
         input[type="date"], input[type="month"] { display: block; min-height: 2.75rem; }
         input[type="file"] { font-size: 14px !important; }
         
-        /* 极致渐变色卡 */
         .grad-alipay { background: linear-gradient(135deg, #0088FF 0%, #0050B3 100%); }
         .grad-wechat { background: linear-gradient(135deg, #07C160 0%, #05964A 100%); }
         .grad-boc { background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%); } 
@@ -63,9 +63,11 @@
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
         .setting-row:last-child { border-bottom: none; }
         
-        #global-toast, #undo-toast { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10000; pointer-events: none;}
+        #global-toast { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 99999; pointer-events: none;}
         .global-toast-hidden { transform: translate(-50%, -150%); opacity: 0; }
         .global-toast-visible { transform: translate(-50%, 0); opacity: 1; }
+        
+        #undo-toast { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9000;}
         .toast-hidden { transform: translate(-50%, 150%); opacity: 0; pointer-events: none; }
         .toast-visible { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
 
@@ -86,47 +88,49 @@
         .smart-animate { animation: smartHighlight 1s ease-out; border-color: #3b82f6 !important; }
         .truncate-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
 
-        /* 目标储蓄卡片特效 */
         .fund-progress-container { width: 100%; background: rgba(0,0,0,0.05); border-radius: 999px; height: 10px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);}
         .fund-progress-bar { height: 10px; border-radius: 999px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(90deg, #10b981, #34d399); position: relative;}
         .fund-progress-bar::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%); animation: shimmer 2s infinite; }
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         
-        .clickable-icon { padding: 8px; margin: -8px; border-radius: 50%; transition: background-color 0.2s; }
-        .clickable-icon:active { background-color: rgba(0,0,0,0.05); }
+        .clickable-btn { transition: all 0.2s; position: relative; z-index: 50; }
+        .clickable-btn:active { transform: scale(0.9); }
     </style>
 </head>
 <body class="pb-safe">
 
-<!-- 全局灵动岛提示 -->
-<div id="global-toast" class="fixed top-14 left-1/2 z-[200] bg-white/95 backdrop-blur-xl shadow-xl border border-gray-100/50 px-5 py-3.5 rounded-full flex items-center gap-3 global-toast-hidden">
+<div id="global-toast" class="fixed top-14 left-1/2 bg-white/95 backdrop-blur-xl shadow-xl border border-gray-100/50 px-5 py-3.5 rounded-full flex items-center gap-3 global-toast-hidden">
     <i id="global-toast-icon" class="fa-solid fa-circle-check text-green-500 text-xl"></i>
     <span id="global-toast-text" class="text-[15px] font-extrabold text-gray-800 whitespace-nowrap tracking-wide">提示信息</span>
 </div>
 
 <div class="app-container">
     
-    <!-- ================= 1. 全景资产表头 ================= -->
+    <!-- ================= 1. 绝对隔离的全景资产表头 ================= -->
     <header class="pt-12 pb-2 px-4 z-10 flex-shrink-0">
         <div class="absolute top-4 left-4 flex gap-2">
-            <button onclick="openTransferModal()" class="text-xs font-black text-blue-600 bg-white/80 backdrop-blur-md px-3.5 py-2 rounded-full border border-white shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform">
+            <button onclick="openTransferModal()" class="text-xs font-black text-blue-600 bg-white/80 backdrop-blur-md px-3.5 py-2 rounded-full border border-white shadow-sm flex items-center gap-1.5 clickable-btn">
                 <i class="fa-solid fa-cloud"></i> 数据舱
             </button>
         </div>
         
         <div class="absolute top-4 right-4 flex gap-2">
-            <button onclick="openSettingsModal()" class="w-9 h-9 bg-white/80 backdrop-blur-md rounded-full border border-white flex items-center justify-center text-gray-800 active:scale-95 transition-transform shadow-sm">
+            <button onclick="openSettingsModal()" class="w-9 h-9 bg-white/80 backdrop-blur-md rounded-full border border-white flex items-center justify-center text-gray-800 shadow-sm clickable-btn">
                 <i class="fa-solid fa-sliders text-sm"></i>
             </button>
         </div>
 
+        <!-- 核心账本：我的个人资产 -->
         <div class="bg-gray-900 rounded-[28px] p-6 text-white shadow-2xl relative overflow-hidden mt-8 mb-4 border border-gray-700/50">
             <div class="absolute -right-4 -bottom-6 opacity-10 text-9xl"><i class="fa-solid fa-vault"></i></div>
-            <div class="flex items-center justify-between mb-1 relative z-10">
+            <div class="flex items-center justify-between mb-1 relative z-20">
                 <p class="text-[13px] text-gray-300 font-bold flex items-center gap-2 tracking-wider">
                     <i class="fa-solid fa-user text-blue-400"></i> 我的个人总净资产
-                    <i id="eye-icon" class="fa-solid fa-eye text-gray-400 clickable-icon" onclick="togglePrivacy()"></i>
                 </p>
+                <!-- 修复了无法点击的小眼睛，包裹在button中且提权z-index -->
+                <button type="button" onclick="togglePrivacy()" class="w-8 h-8 flex items-center justify-center bg-gray-800/50 rounded-full clickable-btn">
+                    <i id="eye-icon" class="fa-solid fa-eye text-gray-400 text-sm"></i>
+                </button>
             </div>
             <h1 id="total-balance" class="text-[42px] leading-tight font-black tracking-tighter mb-4 data-money relative z-10">¥0.00</h1>
             
@@ -143,6 +147,7 @@
             </div>
         </div>
 
+        <!-- 核心账本：家庭资产隔离 -->
         <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-[20px] p-4 border border-pink-100 shadow-sm mb-5 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500"><i class="fa-solid fa-house-chimney-user text-lg"></i></div>
@@ -159,16 +164,19 @@
 
     <main class="flex-1 px-4 pb-16 flex flex-col gap-6 hide-scrollbar">
         
+        <!-- ================= 2. 各大账户卡片彻底回归 ================= -->
         <div>
             <div class="flex justify-between items-center mb-3 px-2">
                 <h3 class="font-extrabold text-[15px] text-gray-900 tracking-wide">各大账户余额分布</h3>
             </div>
+            <!-- 横滑容器保证ID唯一性 -->
             <div class="flex overflow-x-auto hide-scrollbar gap-3.5 pb-4 snap-x snap-mandatory px-1" id="account-container"></div>
         </div>
 
+        <!-- 3. AI 助理动态通知中心 -->
         <div id="ai-alerts-container" class="space-y-3"></div>
 
-        <!-- ================= 3. AI 记账台 ================= -->
+        <!-- 4. AI 极速记账台 -->
         <div class="glass-card p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-white">
             <h3 class="font-black text-xl mb-5 text-gray-900 flex items-center gap-2 tracking-tight">
                 <i class="fa-solid fa-bolt text-blue-500"></i> AI 记账台
@@ -222,9 +230,9 @@
                     </div>
                 </div>
                 
-                <div id="aa-wrapper" class="flex items-center gap-2 px-3 py-2 mt-1 bg-indigo-50/50 rounded-xl w-full border border-indigo-100/80 transition-all">
-                    <input type="checkbox" id="is-shared" class="w-4 h-4 text-indigo-600 rounded border-indigo-300 focus:ring-indigo-500">
-                    <label for="is-shared" class="text-[13px] font-bold text-indigo-700 select-none flex items-center gap-1.5 w-full"><i class="fa-solid fa-people-arrows"></i> 设为家庭公共开支 <span class="text-[10px] text-indigo-400 font-medium ml-auto">(月末算AA)</span></label>
+                <div id="aa-wrapper" class="flex items-center gap-2 px-3 py-2.5 mt-1 bg-indigo-50/50 rounded-xl w-full border border-indigo-100/80 transition-all">
+                    <input type="checkbox" id="is-shared" class="w-5 h-5 text-indigo-600 rounded border-indigo-300 focus:ring-indigo-500">
+                    <label for="is-shared" class="text-[13px] font-bold text-indigo-700 select-none flex items-center gap-1.5 w-full ml-1"><i class="fa-solid fa-people-arrows"></i> 设为家庭公共开支 <span class="text-[10px] text-indigo-400 font-medium ml-auto">(月末算AA)</span></label>
                 </div>
 
                 <button type="submit" class="w-full h-14 bg-gray-900 active:bg-black text-white font-black text-[16px] rounded-xl shadow-xl shadow-gray-900/20 transition-transform active:scale-95 flex items-center justify-center gap-2 mt-4 tracking-wide">
@@ -233,23 +241,22 @@
             </form>
         </div>
 
-        <!-- ================= 4. 近期流水与检索引擎 ================= -->
-        <div class="glass-card p-5">
-            <div class="flex justify-between items-center mb-3 px-1">
-                <h3 class="font-black text-[16px] text-gray-900">流水账单</h3>
+        <!-- ================= 5. 全局检索与近期流水 ================= -->
+        <div class="glass-card p-6 mt-2">
+            <div class="flex justify-between items-center mb-4 px-1">
+                <h3 class="font-black text-lg text-gray-900">流水与检索</h3>
                 <span class="font-bold text-gray-400 text-[11px]">按时间倒序</span>
             </div>
             
-            <!-- 🔍 新增：全局智能检索引擎 -->
-            <div class="relative mb-4">
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" id="search-input" class="w-full bg-gray-50/80 rounded-xl h-10 pl-10 pr-4 text-[14px] font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner border border-gray-200/60 transition-all placeholder:font-normal" placeholder="搜索备注、金额、分类 (如: 押金)...">
+            <div class="relative mb-5">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" id="search-input" class="w-full bg-gray-50 rounded-xl h-12 pl-12 pr-4 text-[14px] font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner border border-gray-200/80 transition-all placeholder:font-normal" placeholder="搜索备注、金额、分类 (如: 押金)...">
             </div>
 
-            <ul id="recent-list" class="space-y-0 divide-y divide-gray-100/80 max-h-[400px] overflow-y-auto pr-1"></ul>
+            <ul id="recent-list" class="space-y-0 divide-y divide-gray-100/80 max-h-[350px] overflow-y-auto pr-1"></ul>
         </div>
 
-        <!-- ================= 5. 🎯 愿景目标储蓄 (Sinking Funds) ================= -->
+        <!-- ================= 6. 🎯 愿景目标储蓄 (Sinking Funds) ================= -->
         <div class="glass-card p-6 border-t-4 border-emerald-500 mt-2 shadow-lg">
             <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
                 <div>
@@ -258,13 +265,12 @@
                     </h3>
                     <p class="text-[11px] text-gray-500 font-bold mt-1.5">信封理财法：给每一分“死钱”赋予使命</p>
                 </div>
-                <button onclick="openFundModal()" class="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center font-bold active:scale-95 transition-transform"><i class="fa-solid fa-plus"></i></button>
+                <button onclick="openFundModal()" class="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center font-bold clickable-btn"><i class="fa-solid fa-plus"></i></button>
             </div>
-            
             <div id="funds-container" class="space-y-4"></div>
         </div>
 
-        <!-- ================= 6. 月度瀑布流报表 ================= -->
+        <!-- ================= 7. 月度瀑布流报表 ================= -->
         <div class="glass-card p-6 mt-2">
             <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-4">
                 <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight">
@@ -330,9 +336,12 @@
             </div>
 
             <div class="h-52 relative flex items-center justify-center w-full mb-5"><canvas id="expenseChart"></canvas></div>
+            
+            <h3 class="font-black text-[15px] mb-3 text-gray-900 mt-8 border-t border-gray-100 pt-5">当月完整明细</h3>
+            <ul id="list" class="space-y-0 divide-y divide-gray-100/50 max-h-[350px] overflow-y-auto pr-1"></ul>
         </div>
 
-        <!-- 7. 华尔街行为金融策略机 -->
+        <!-- 8. 华尔街行为金融策略机 -->
         <div class="glass-card p-6 mt-2 border-t-4 border-orange-500">
             <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
                 <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight"><i class="fa-solid fa-chart-pie text-orange-500"></i> 华尔街策略机</h3>
@@ -351,7 +360,7 @@
             <div id="strategy-advice-box" class="bg-orange-50/50 rounded-2xl p-5 border border-orange-100 text-[14px] text-gray-800 space-y-2.5 leading-relaxed font-bold"></div>
         </div>
 
-        <!-- 8. 标普4321 家庭理财雷达 -->
+        <!-- 9. 标普4321 家庭理财雷达 -->
         <div class="glass-card p-6 mt-2 border-t-4 border-indigo-500">
             <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
                 <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight"><i class="fa-solid fa-robot text-indigo-500"></i> 家庭资产雷达</h3>
@@ -382,7 +391,7 @@
             <div id="ai-advisor-box" class="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-[14px] text-gray-800 space-y-3 leading-relaxed font-bold"></div>
         </div>
 
-        <!-- 9. 年度财报体检 -->
+        <!-- 10. 年度财报体检 -->
         <div class="glass-card p-6 mt-2 mb-4">
             <div class="flex justify-between items-center mb-5 border-b border-gray-100 pb-3">
                 <h3 class="font-black text-xl text-gray-900 flex items-center gap-2 tracking-tight"><i class="fa-solid fa-stethoscope text-blue-500"></i> 年度财报体检</h3>
@@ -393,6 +402,7 @@
                 <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-50/50 rounded-bl-[80px] -z-10"></div>
                 <div class="flex justify-between items-center mb-3"><span class="text-[13px] text-gray-500 font-bold">年度总收入</span><span class="text-[17px] font-black text-green-600 data-money" id="year-income">+¥0.00</span></div>
                 <div class="flex justify-between items-center mb-2"><span class="text-[13px] text-gray-500 font-bold">年度总支出</span><span class="text-[17px] font-black text-gray-900 data-money" id="year-expense">-¥0.00</span></div>
+                
                 <div class="pl-4 border-l-[3px] border-gray-200/60 ml-2 mb-5 mt-3 space-y-2.5">
                     <div class="flex justify-between items-center"><span class="text-xs font-bold text-gray-700">├─ 纯日常开销 <span id="year-routine-pct" class="text-gray-400 ml-1 font-mono font-black">0%</span></span><span class="text-xs font-black text-gray-600 data-money" id="year-routine-expense">-¥0.00</span></div>
                     <div class="flex justify-between items-center"><span class="text-xs font-bold text-gray-700">└─ 大额/非日常 <span id="year-nonroutine-pct" class="text-gray-400 ml-1 font-mono font-black">0%</span></span><span class="text-xs font-black text-gray-600 data-money" id="year-nonroutine-expense">-¥0.00</span></div>
@@ -418,7 +428,7 @@
 <div id="undo-toast" class="fixed bottom-10 left-1/2 bg-gray-900/95 backdrop-blur text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-4 z-50 toast-hidden border border-gray-700">
     <div class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i><span id="undo-text" class="text-[15px] font-bold whitespace-nowrap truncate-text tracking-wide">已记一笔</span></div>
     <div class="w-px h-5 bg-gray-600"></div>
-    <button onclick="undoLastTransaction()" class="text-blue-400 font-black text-[15px] hover:text-blue-300 active:scale-95 transition-transform whitespace-nowrap"><i class="fa-solid fa-rotate-left mr-1"></i>撤回</button>
+    <button onclick="undoLastTransaction()" class="text-blue-400 font-black text-[15px] hover:text-blue-300 clickable-btn whitespace-nowrap"><i class="fa-solid fa-rotate-left mr-1"></i>撤回</button>
 </div>
 
 <!-- 目标储蓄管理 -->
@@ -426,7 +436,7 @@
     <div class="modal-content">
         <div class="flex justify-between items-center mb-6">
             <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-bullseye text-emerald-500"></i> 管理目标储蓄</h3>
-            <button onclick="closeFundModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeFundModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center clickable-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <input type="hidden" id="fund-id">
         <div class="space-y-5">
@@ -437,8 +447,8 @@
             <div><label class="block text-[11px] font-bold text-gray-500 mb-1.5 ml-1">目标金额 (¥)</label><input type="number" id="fund-target" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-black text-xl text-gray-900 bg-gray-50 border border-gray-200" placeholder="10000" step="100"></div>
             <div><label class="block text-[11px] font-bold text-emerald-600 mb-1.5 ml-1">已攒金额 (¥) <span class="text-gray-400 font-normal ml-1">手动调拨</span></label><input type="number" id="fund-current" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-black text-xl text-emerald-700 bg-emerald-50 border border-emerald-200" placeholder="0" step="0.01"></div>
             <div class="flex gap-3 mt-6">
-                <button onclick="deleteFund()" id="fund-delete-btn" class="w-1/3 h-14 bg-red-50 text-red-600 font-bold rounded-xl active:scale-95 hidden">删除</button>
-                <button onclick="saveFund()" id="fund-save-btn" class="w-full h-14 bg-emerald-500 active:bg-emerald-600 text-white font-black text-lg rounded-xl shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform">保存进度</button>
+                <button onclick="deleteFund()" id="fund-delete-btn" class="w-1/3 h-14 bg-red-50 text-red-600 font-bold rounded-xl clickable-btn hidden">删除</button>
+                <button onclick="saveFund()" id="fund-save-btn" class="w-full h-14 bg-emerald-500 active:bg-emerald-600 text-white font-black text-lg rounded-xl shadow-lg shadow-emerald-500/30 clickable-btn">保存进度</button>
             </div>
         </div>
     </div>
@@ -449,7 +459,7 @@
     <div class="modal-content">
         <div class="flex justify-between items-center mb-6">
             <h3 class="font-extrabold text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-blue-500"></i> 修改账单记录</h3>
-            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center clickable-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="space-y-4">
             <div class="flex gap-3">
@@ -466,7 +476,7 @@
                 <label for="edit-is-shared" class="text-[13px] font-bold text-indigo-700 select-none flex items-center gap-1.5 ml-1"><i class="fa-solid fa-people-arrows"></i> 家庭共同开支 (AA)</label>
             </div>
             <div><label class="block text-[11px] font-bold text-gray-500 mb-1 ml-1">备注说明</label><input type="text" id="edit-text" class="w-full rounded-xl h-14 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-800 bg-gray-50 border border-gray-200"></div>
-            <button onclick="saveEditTransaction()" class="w-full h-14 bg-gray-900 active:bg-black text-white font-black text-lg rounded-xl shadow-xl active:scale-95 mt-5 transition-transform">确认修改并保存</button>
+            <button onclick="saveEditTransaction()" class="w-full h-14 bg-gray-900 active:bg-black text-white font-black text-lg rounded-xl shadow-xl clickable-btn mt-5">确认修改并保存</button>
         </div>
     </div>
 </div>
@@ -476,10 +486,10 @@
     <div class="modal-content">
         <div class="flex justify-between items-center mb-5">
             <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-scale-balanced text-blue-500"></i> CFO 盘点台</h3>
-            <button onclick="closeSettingsModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeSettingsModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center clickable-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         
-        <button onclick="openRecurringModal()" class="w-full bg-indigo-50 border border-indigo-100 text-indigo-700 py-3.5 rounded-xl mb-6 flex items-center justify-center gap-2 font-bold active:scale-95 transition-transform shadow-sm">
+        <button onclick="openRecurringModal()" class="w-full bg-indigo-50 border border-indigo-100 text-indigo-700 py-3.5 rounded-xl mb-6 flex items-center justify-center gap-2 font-bold clickable-btn shadow-sm">
             <i class="fa-solid fa-robot"></i> 管理每月自动记账 (房租/工资)
         </button>
 
@@ -492,26 +502,26 @@
         </div>
         
         <h4 class="text-[15px] font-black text-gray-900 mb-2 mt-5 border-t border-gray-100 pt-5">⚖️ 资产盘点 (系统平账)</h4>
-        <p class="text-[11px] font-medium text-gray-500 mb-4 bg-blue-50/80 p-3 rounded-xl border border-blue-100 leading-relaxed">填入当前真实余额，系统自动生成留痕“平账交易”。</p>
+        <p class="text-[11px] font-medium text-gray-500 mb-4 bg-blue-50/80 p-3 rounded-xl border border-blue-100 leading-relaxed">填入当前真实余额，系统自动生成留痕“平账交易”。非经营性大额收入也在此调整。</p>
         <div class="mb-5 flex items-center gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
             <label class="block text-[13px] font-black text-gray-700 whitespace-nowrap">盘点生效时间</label>
             <input type="date" id="calib-date" class="w-full bg-transparent text-[15px] focus:outline-none font-bold text-blue-600 text-right" required>
         </div>
         <div id="calibration-container" class="space-y-1 mb-6 max-h-[30vh] overflow-y-auto pr-2"></div>
-        <button onclick="saveSettingsAndCalibrate()" class="w-full bg-blue-600 text-white py-4 rounded-xl text-[16px] font-black shadow-lg shadow-blue-500/30 mb-3 active:scale-95 transition-transform">保存并执行盘点</button>
-        <button onclick="clearAllData()" class="w-full bg-red-50 text-red-600 border border-red-100 py-3.5 rounded-xl text-xs font-bold active:bg-red-100 transition-colors"><i class="fa-solid fa-trash mr-1"></i> 重置清空所有数据</button>
+        <button onclick="saveSettingsAndCalibrate()" class="w-full bg-blue-600 text-white py-4 rounded-xl text-[16px] font-black shadow-lg shadow-blue-500/30 mb-3 clickable-btn">保存并执行盘点</button>
+        <button onclick="clearAllData()" class="w-full bg-red-50 text-red-600 border border-red-100 py-3.5 rounded-xl text-xs font-bold clickable-btn"><i class="fa-solid fa-trash mr-1"></i> 重置清空所有数据</button>
     </div>
 </div>
 
 <!-- 自动化记账规则管理模态框 -->
-<div id="recurring-modal" class="modal-overlay" style="z-index: 10001;">
+<div id="recurring-modal" class="modal-overlay">
     <div class="modal-content">
         <div class="flex justify-between items-center mb-5">
             <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-robot text-indigo-500"></i> 自动化订阅中心</h3>
-            <button onclick="closeRecurringModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-arrow-left"></i></button>
+            <button onclick="closeRecurringModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center clickable-btn"><i class="fa-solid fa-arrow-left"></i></button>
         </div>
         <p class="text-[11px] font-medium text-gray-500 mb-4 bg-indigo-50/80 p-3 rounded-xl border border-indigo-100 leading-relaxed">
-            设置后，系统将在每个月第一次打开时，**自动在当月 1 号**生成这些固定收支，彻底解放双手。
+            设置后，系统将在每个月第一次打开时，自动在当月 1 号生成这些固定收支，彻底解放双手。
         </p>
 
         <div class="mb-5 border-b border-gray-100 pb-4">
@@ -533,7 +543,7 @@
                 <select id="rec-category" class="w-1/2 rounded-xl h-12 px-2 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200 text-sm"></select>
             </div>
             <input type="text" id="rec-text" class="w-full rounded-xl h-12 px-3 focus:outline-none font-bold text-gray-800 bg-gray-50 border border-gray-200 text-sm" placeholder="备注说明 (如: 房租、底薪)">
-            <button onclick="saveRecurringTask()" class="w-full h-12 bg-indigo-600 text-white font-bold rounded-xl active:scale-95 transition-transform shadow-md">添加自动化任务</button>
+            <button onclick="saveRecurringTask()" class="w-full h-12 bg-indigo-600 text-white font-bold rounded-xl clickable-btn shadow-md">添加自动化任务</button>
         </div>
     </div>
 </div>
@@ -543,7 +553,7 @@
     <div class="modal-content">
         <div class="flex justify-between items-center mb-5">
             <h3 class="font-black text-xl text-gray-900 flex items-center gap-2"><i class="fa-solid fa-cloud text-blue-500"></i> 数据舱</h3>
-            <button onclick="closeTransferModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center active:scale-95 transition-transform"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="closeTransferModal()" class="text-gray-400 bg-gray-100 rounded-full w-9 h-9 flex items-center justify-center clickable-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         
         <p class="text-[11px] font-medium text-gray-500 mb-4 bg-blue-50/80 p-3 rounded-xl border border-blue-100 leading-relaxed">
@@ -551,7 +561,7 @@
         </p>
 
         <div class="mb-6">
-            <button onclick="downloadBackupFile()" class="w-full bg-blue-500 text-white border border-blue-600 py-3.5 rounded-xl text-[15px] font-black active:scale-95 transition-transform shadow-lg shadow-blue-500/30">
+            <button onclick="downloadBackupFile()" class="w-full bg-blue-500 text-white border border-blue-600 py-3.5 rounded-xl text-[15px] font-black clickable-btn shadow-lg shadow-blue-500/30">
                 <i class="fa-solid fa-download mr-1"></i> 下载全量备份文件 (.json)
             </button>
         </div>
@@ -563,14 +573,14 @@
             <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-inner">
                 <input type="file" id="import-file" accept=".json" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
             </div>
-            <button onclick="importBackupFile()" class="w-full bg-gray-900 text-white py-3.5 rounded-xl text-[15px] font-black active:scale-95 transition-transform shadow-xl">
+            <button onclick="importBackupFile()" class="w-full bg-gray-900 text-white py-3.5 rounded-xl text-[15px] font-black clickable-btn shadow-xl">
                 <i class="fa-solid fa-upload mr-1"></i> 从文件恢复数据
             </button>
         </div>
         
         <div class="mt-6 flex gap-3">
-            <button onclick="exportReport('month')" class="flex-1 bg-white border border-gray-200 py-2.5 rounded-xl shadow-sm text-[11px] font-bold text-gray-700 active:scale-95 transition-transform"><i class="fa-solid fa-file-excel text-green-500 mr-1"></i>导出本月CSV</button>
-            <button onclick="exportReport('year')" class="flex-1 bg-white border border-gray-200 py-2.5 rounded-xl shadow-sm text-[11px] font-bold text-gray-700 active:scale-95 transition-transform"><i class="fa-solid fa-file-excel text-green-500 mr-1"></i>导出年度CSV</button>
+            <button onclick="exportReport('month')" class="flex-1 bg-white border border-gray-200 py-2.5 rounded-xl shadow-sm text-[11px] font-bold text-gray-700 clickable-btn"><i class="fa-solid fa-file-excel text-green-500 mr-1"></i>本月CSV</button>
+            <button onclick="exportReport('year')" class="flex-1 bg-white border border-gray-200 py-2.5 rounded-xl shadow-sm text-[11px] font-bold text-gray-700 clickable-btn"><i class="fa-solid fa-file-excel text-green-500 mr-1"></i>年度CSV</button>
         </div>
     </div>
 </div>
@@ -670,6 +680,20 @@
         return `${prefix}¥${formatMoney(amount)}`;
     }
 
+    // 确保 DOM 元素能够被点击，并更新相关涉及金额的节点
+    function updatePrivacyUI() {
+        document.getElementById('eye-icon').className = isPrivacyMode ? 'fa-solid fa-eye-slash text-gray-400' : 'fa-solid fa-eye text-gray-400';
+        const icon2 = document.getElementById('eye-icon-asset');
+        if(icon2) icon2.className = isPrivacyMode ? 'fa-solid fa-eye-slash text-[10px] text-gray-500' : 'fa-solid fa-eye text-[10px] text-gray-500';
+    }
+
+    window.togglePrivacy = function() {
+        isPrivacyMode = !isPrivacyMode; 
+        localStorage.setItem('speed_ledger_privacy', isPrivacyMode);
+        updatePrivacyUI();
+        render(); 
+    };
+
     function updateCategoryOptions(type, selectEl = document.getElementById('category')) {
         if(type === 'transfer' || type === 'adjust') return;
         const opts = categoriesMap[type] || categoriesMap['expense'];
@@ -723,7 +747,6 @@
         }
     });
 
-    // 🔍 搜索逻辑
     document.getElementById('search-input').addEventListener('input', (e) => {
         currentSearchKeyword = e.target.value.toLowerCase().trim();
         renderSearchList();
@@ -755,7 +778,7 @@
     }
 
     function initUI() {
-        if (isPrivacyMode) document.getElementById('eye-icon').className = 'fa-solid fa-eye-slash text-gray-400 clickable-icon';
+        updatePrivacyUI();
 
         const today = new Date();
         document.getElementById('tx-date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -886,7 +909,7 @@
 
         let advice = '';
         if(totalPnl < 0) advice = `<strong>【逆向风控】</strong> 近期面临回撤。华尔街法则：恐慌时贪婪。请审查持仓基本面，若未恶化切忌盲目割肉，可开启【定投(DCA)】摊薄成本。`;
-        else advice = `<strong>【止盈风控】</strong> 近期获取了正收益！市场情绪可能过热。建议设定【动态止盈点】，将部分利润转入稳健定存。`;
+        else advice = `<strong>【止盈风控】</strong> 近期获取了正收益！市场情绪可能过热。建议设定【动态止盈点】，将部分利润转入稳健定存账户。`;
         adviceBox.innerHTML = advice;
     }
 
@@ -968,7 +991,7 @@
                 (t.amount && Math.abs(t.amount).toString().includes(currentSearchKeyword)) ||
                 (t.tags && t.tags.some(tag => tag.toLowerCase().includes(currentSearchKeyword)))
             );
-            renderTransactions(filteredTxs, 'recent-list', 0); // show all matches
+            renderTransactions(filteredTxs, 'recent-list', 0);
         }
     }
 
@@ -992,8 +1015,7 @@
         const monthTxs = transactions.filter(t => t.dateObj.startsWith(selectedMonth));
         renderMonthlyDashboard(monthTxs);
         
-        renderSearchList(); // Trigger search filter for recent list
-        
+        renderSearchList(); 
         renderTransactions(monthTxs, 'list', 0); 
         
         renderChart(monthTxs);
@@ -1175,8 +1197,8 @@
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-black ${t.amount > 0 ? 'text-green-600' : 'text-gray-700'}">${t.amount > 0 ? '+' : ''}${isPrivacyMode ? '****' : formatMoney(t.amount)}</span>
                             <div class="flex gap-2">
-                                <button onclick="openEditModal('${t.id}')" class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-blue-500 flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-pen text-[11px]"></i></button>
-                                <button onclick="removeTransaction('${t.id}')" class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
+                                <button onclick="openEditModal('${t.id}')" class="w-8 h-8 bg-white rounded-full shadow border border-gray-100 text-gray-400 hover:text-blue-500 flex items-center justify-center clickable-btn"><i class="fa-solid fa-pen text-[11px]"></i></button>
+                                <button onclick="removeTransaction('${t.id}')" class="w-8 h-8 bg-white rounded-full shadow border border-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center clickable-btn"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
                             </div>
                         </div>
                     </div>
@@ -1231,8 +1253,8 @@
                             <span class="text-[9px] text-gray-400 font-mono font-bold">${t.dateObj}</span>
                         </div>
                         <div class="flex flex-col gap-1.5 ml-2">
-                            <button class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-blue-500 flex items-center justify-center active:scale-90 transition-transform" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pen text-[11px]"></i></button>
-                            <button class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center active:scale-90 transition-transform" onclick="removeTransaction('${t.id}')"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
+                            <button class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-blue-500 flex items-center justify-center clickable-btn" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pen text-[11px]"></i></button>
+                            <button class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-red-500 flex items-center justify-center clickable-btn" onclick="removeTransaction('${t.id}')"><i class="fa-solid fa-trash-can text-[11px]"></i></button>
                         </div>
                     </div>
                 `;
@@ -1414,37 +1436,22 @@
         render(); closeSettingsModal(); showGlobalToast('数据已全部重置', 'info');
     };
 
-    // 🚀 V14 全新：文件备份系统
     const transferModal = document.getElementById('transfer-modal');
     window.openTransferModal = () => transferModal.style.display = 'flex';
     window.closeTransferModal = () => transferModal.style.display = 'none';
     
     window.downloadBackupFile = function() {
         const fullData = { tx: transactions, bal: initialBalances, bud: monthlyBudget, fnd: targetFunds, rec: recurringTasks, log: recurringLogs }; 
-        const dataStr = JSON.stringify(fullData);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        const date = new Date().toISOString().slice(0,10);
-        a.href = url;
-        a.download = `家庭CFO_数据备份_${date}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
+        const dataStr = JSON.stringify(fullData); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); const date = new Date().toISOString().slice(0,10);
+        a.href = url; a.download = `家庭CFO_数据备份_${date}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         showGlobalToast("备份文件已下载！请妥善保存。");
     }
     
     window.importBackupFile = function() {
-        const fileInput = document.getElementById('import-file');
-        const file = fileInput.files[0];
-        
-        if (!file) {
-            showGlobalToast("请先选择一个备份文件 (.json)", "error");
-            return;
-        }
+        const fileInput = document.getElementById('import-file'); const file = fileInput.files[0];
+        if (!file) { showGlobalToast("请先选择一个备份文件 (.json)", "error"); return; }
 
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -1452,30 +1459,18 @@
                 const parsedData = JSON.parse(e.target.result);
                 if (!confirm("⚠️ 确认用该文件覆盖当前设备的所有数据吗？")) return;
                 
-                transactions = parsedData.tx || []; 
-                initialBalances = parsedData.bal || {}; 
-                monthlyBudget = parsedData.bud || 0;
-                if(parsedData.fnd) targetFunds = parsedData.fnd;
-                if(parsedData.rec) recurringTasks = parsedData.rec;
-                if(parsedData.log) recurringLogs = parsedData.log;
+                transactions = parsedData.tx || []; initialBalances = parsedData.bal || {}; monthlyBudget = parsedData.bud || 0;
+                if(parsedData.fnd) targetFunds = parsedData.fnd; if(parsedData.rec) recurringTasks = parsedData.rec; if(parsedData.log) recurringLogs = parsedData.log;
                 
-                localStorage.setItem(KEY_FUNDS, JSON.stringify(targetFunds));
-                localStorage.setItem(KEY_REC, JSON.stringify(recurringTasks));
-                localStorage.setItem(KEY_REC_LOG, JSON.stringify(recurringLogs));
+                localStorage.setItem(KEY_FUNDS, JSON.stringify(targetFunds)); localStorage.setItem(KEY_REC, JSON.stringify(recurringTasks)); localStorage.setItem(KEY_REC_LOG, JSON.stringify(recurringLogs));
                 
-                render(); 
-                closeTransferModal(); 
-                showGlobalToast("财务数据恢复成功！");
-            } catch (err) { 
-                showGlobalToast("文件解析失败，请检查是否为有效的备份文件", "error"); 
-            }
+                render(); closeTransferModal(); showGlobalToast("财务数据恢复成功！");
+            } catch (err) { showGlobalToast("文件解析失败，请检查是否为有效的备份文件", "error"); }
         };
         reader.readAsText(file);
     }
 
-    // 🚀 V14 自动记账规则管理
     const recurringModal = document.getElementById('recurring-modal');
-    
     window.openRecurringModal = () => {
         document.getElementById('settings-modal').style.display = 'none';
         const accOptions = accountTypes.filter(a => !a.hideInSelect).map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
@@ -1492,13 +1487,12 @@
         if(recurringTasks.length === 0) { ul.innerHTML = `<li class="text-[11px] text-gray-400 py-2">暂无自动记账规则。</li>`; return; }
         recurringTasks.forEach(task => {
             const accName = accountTypes.find(a => a.id === task.accountId)?.name || '未知';
-            const colorClass = task.type === 'expense' ? 'text-red-600' : 'text-green-600';
-            const sign = task.type === 'expense' ? '-' : '+';
+            const colorClass = task.type === 'expense' ? 'text-red-600' : 'text-green-600'; const sign = task.type === 'expense' ? '-' : '+';
             const li = document.createElement('li');
             li.className = 'flex justify-between items-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm';
             li.innerHTML = `
                 <div><p class="text-[13px] font-bold text-gray-800">${task.text}</p><p class="text-[10px] text-gray-400 mt-0.5">${accName} · ${task.category}</p></div>
-                <div class="flex items-center gap-3"><span class="text-[14px] font-black ${colorClass}">${sign}¥${formatMoney(task.amount)}</span><button onclick="deleteRecurringTask('${task.id}')" class="w-7 h-7 bg-red-50 text-red-500 rounded-full flex items-center justify-center active:scale-90 transition-transform"><i class="fa-solid fa-trash-can text-[11px]"></i></button></div>
+                <div class="flex items-center gap-3"><span class="text-[14px] font-black ${colorClass}">${sign}¥${formatMoney(task.amount)}</span><button onclick="deleteRecurringTask('${task.id}')" class="w-8 h-8 bg-red-50 text-red-500 rounded-full flex items-center justify-center clickable-btn"><i class="fa-solid fa-trash-can text-[11px]"></i></button></div>
             `;
             ul.appendChild(li);
         });
@@ -1521,6 +1515,39 @@
         if(!confirm('确定删除此自动化规则？')) return;
         recurringTasks = recurringTasks.filter(t => t.id !== id); localStorage.setItem(KEY_REC, JSON.stringify(recurringTasks)); renderRecurringList();
     }
+
+    window.exportReport = async function(type) {
+        if(transactions.length === 0) { showGlobalToast('暂无数据可导出', 'error'); return; }
+        const now = new Date(), currentYear = now.getFullYear(), currentMonth = now.getMonth();
+        let filtered = transactions, filename = 'CFO资产报表_全部数据.csv';
+
+        if(type === 'month') {
+            filtered = transactions.filter(t => { const txDate = new Date(t.dateObj || t.timestamp); return txDate.getFullYear() === currentYear && txDate.getMonth() === currentMonth; });
+            filename = `CFO资产报表_本月_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.csv`;
+        } else if(type === 'year') {
+            filtered = transactions.filter(t => new Date(t.dateObj || t.timestamp).getFullYear() === currentYear);
+            filename = `CFO资产报表_年度_${currentYear}.csv`;
+        }
+        if(filtered.length === 0) { showGlobalToast('该时间段内无数据', 'info'); return; }
+
+        const headers = ['记账日期', '收支性质', '资金分类/流向', '对应账户', '发生金额(元)', '详细备注', '系统录入时间'];
+        const rows = filtered.map(t => {
+            let typeStr = '日常支出'; let catStr = t.category; let accStr = accountTypes.find(a => a.id === t.accountId)?.name || '未知';
+            if (t.type === 'income') typeStr = '各项收入'; 
+            else if (t.type === 'transfer') { typeStr = '内部转账/还款'; const fromAccName = accountTypes.find(a => a.id === t.fromAccountId)?.name || '未知'; catStr = `${fromAccName} -> ${accStr}`; accStr = '-'; } 
+            else if (t.type === 'pnl') { typeStr = '投资盈亏'; }
+            else if (t.type === 'adjust') { typeStr = 'CFO系统平账'; }
+
+            return [ t.dateObj || t.date, typeStr, catStr, accStr, Math.abs(t.amount).toFixed(2), t.text.replace(/,/g, '，'), new Date(t.timestamp).toLocaleString('zh-CN') ];
+        });
+
+        let csvContent = "\uFEFF" + headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
+        const file = new File([csvContent], filename, { type: 'text/csv;charset=utf-8;' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], title: filename, text: '家庭CFO财务对账单📊' }); return; } catch (err) { if (err.name === 'AbortError') return; }
+        }
+        const link = document.createElement("a"); link.href = URL.createObjectURL(file); link.download = filename; link.click();
+    };
 
     initUI();
 </script>
